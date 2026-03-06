@@ -1,5 +1,8 @@
 require("dotenv").config();
-const mongoose = require("mongoose");
+//const mongoose = require("mongoose");
+const connectDB = require("../shared/db/mongoose");
+
+connectDB();
 
 process.on("uncaughtException", (err) => {
   console.log("UNCAUGHT EXCEPTION! Shutting down...");
@@ -9,14 +12,14 @@ process.on("uncaughtException", (err) => {
 
 const app = require("./app");
 
-const DB =
-  process.env.NODE_ENV === "production"
-    ? process.env.DATABASE_ATLAS
-    : process.env.DATABASE_LOCAL;
+// const DB =
+//   process.env.NODE_ENV === "production"
+//     ? process.env.DATABASE_ATLAS
+//     : process.env.DATABASE_LOCAL;
 
-mongoose.connect(DB).then(() => {
-  console.log("DB connected successfully");
-});
+// mongoose.connect(DB).then(() => {
+//   console.log("DB connected successfully");
+// });
 
 const port = process.env.PORT || 3000;
 

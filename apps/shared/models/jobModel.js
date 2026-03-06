@@ -12,6 +12,16 @@ module.exports = function createJobModel(mongoose) {
           "UPDATE_FIELD",
         ],
       },
+      lockedBy: String,
+      lockedAt: Date,
+      attempts: {
+        type: Number,
+        default: 0,
+      },
+      createdAt: {
+        type: Date,
+        default: Date.now,
+      },
       issueKey: { type: String, required: true },
       department: {
         type: String,
