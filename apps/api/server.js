@@ -9,10 +9,13 @@ process.on("uncaughtException", (err) => {
 
 const app = require("./app");
 
-const DB = process.env.DATABASE_LOCAL;
+const DB =
+  process.env.NODE_ENV === "production"
+    ? process.env.DATABASE_ATLAS
+    : process.env.DATABASE_LOCAL;
 
 mongoose.connect(DB).then(() => {
-  console.log("DB connection successful!");
+  console.log("DB connected successfully");
 });
 
 const port = process.env.PORT || 3000;

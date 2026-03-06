@@ -1,4 +1,4 @@
-require("dotenv").config({ path: "../api/.env" });
+require("dotenv").config();
 
 const mongoose = require("mongoose");
 const createJobModel = require("../shared/models/jobModel");
@@ -8,7 +8,7 @@ async function startWorker() {
     // Make buffering fail fast so we see real connection errors
     mongoose.set("bufferCommands", false);
 
-    await mongoose.connect(process.env.DATABASE_LOCAL, {
+    await mongoose.connect(process.env.DATABASE_ATLAS, {
       serverSelectionTimeoutMS: 5000,
     });
 
