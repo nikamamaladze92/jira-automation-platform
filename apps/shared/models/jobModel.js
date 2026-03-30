@@ -41,7 +41,7 @@ module.exports = function createJobModel(mongoose) {
         default: "queued",
         index: true,
       },
-      attempts: { type: Number, default: 0 },
+      // attempts: { type: Number, default: 0 },
       error: String,
     },
     { timestamps: true },

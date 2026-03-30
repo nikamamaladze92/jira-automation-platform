@@ -1,13 +1,20 @@
 const express = require("express");
-const errorHandler = require("./middleware/errorHandler");
-const executionRouter = require("./routes/executionRoutes");
+
 const jobRouter = require("./routes/jobRoutes");
+const ruleRouter = require("./routes/ruleRoutes");
+const demoRouter = require("./routes/demoRoutes");
+const executionRouter = require("./routes/executionRoutes");
+const errorHandler = require("./middleware/errorHandler");
+const authRouter = require("./routes/authRoutes");
 
 const app = express();
 
 app.use(express.json());
 
+app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/jobs", jobRouter);
+app.use("/api/v1/rules", ruleRouter);
+app.use("/api/v1/demo", demoRouter);
 app.use("/api/v1/executions", executionRouter);
 
 app.use(errorHandler);
