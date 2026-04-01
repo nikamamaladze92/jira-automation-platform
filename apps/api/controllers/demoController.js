@@ -1,9 +1,11 @@
 const mongoose = require("mongoose");
 const createRuleModel = require("../../shared/models/ruleModel");
 const createJobModel = require("../../shared/models/jobModel");
+const createEventModel = require("../../shared/models/eventModel");
 
 const Rule = createRuleModel(mongoose);
 const Job = createJobModel(mongoose);
+const Event = createEventModel(mongoose);
 
 function matchesCondition(event, condition) {
   const actualValue = event[condition.field];
@@ -26,14 +28,26 @@ function ruleMatchesEvent(rule, event) {
 
 exports.triggerDemoEvent = async (req, res) => {
   try {
-    const event = req.body;
+    const incomingEvent = req.body;
+
+    const savedEvent = await Event.create({
+      source: "demo",
+      eventType: incomingEvent.eventType,
+      issueKey: incomingEvent.issueKey,
+      priority: incomingEvent.priority,
+      department: incomingEvent.department,
+      payload: incomingEvent,
+      processed: false,
+    });
 
     const rules = await Rule.find({
       enabled: true,
-      trigger: event.eventType,
+      trigger: savedEvent.eventType,
     });
 
-    const matchedRules = rules.filter((rule) => ruleMatchesEvent(rule, event));
+    const matchedRules = rules.filter((rule) =>
+      ruleMatchesEvent(rule, savedEvent),
+    );
 
     const jobs = [];
 
@@ -41,8 +55,7 @@ exports.triggerDemoEvent = async (req, res) => {
       for (const action of rule.actions) {
         const job = await Job.create({
           type: action.type,
-          issueKey: event.issueKey,
-          department: event.department,
+          issueKey: savedEvent.issueKey,
           payload: action.payload,
           status: "queued",
         });
@@ -51,10 +64,14 @@ exports.triggerDemoEvent = async (req, res) => {
       }
     }
 
+    savedEvent.processed = true;
+    await savedEvent.save();
+
     res.status(200).json({
       status: "success",
       results: jobs.length,
       data: {
+        event: savedEvent,
         matchedRules: matchedRules.map((rule) => ({
           id: rule._id,
           name: rule.name,
