@@ -3,7 +3,7 @@ const connectDB = require("../shared/db/mongoose");
 
 const mongoose = require("mongoose");
 const createJobModel = require("../shared/models/jobModel");
-const createExecutionModel = require("../shared/models/Execution");
+const createExecutionModel = require("../shared/models/execution");
 const jira = require("./services/jiraService");
 const WORKER_ID = `worker-${process.pid}`;
 

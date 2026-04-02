@@ -11,7 +11,7 @@ const baseUrl = getRequiredEnv("JIRA_BASE_URL").replace(/\/$/, "");
 const email = getRequiredEnv("JIRA_EMAIL");
 const token = getRequiredEnv("JIRA_API_TOKEN");
 
-// ✅ This is the axios client (name it jiraClient so we never confuse it)
+//axios client name it jiraClient !!!!!
 const jiraClient = axios.create({
   baseURL: `${baseUrl}/rest/api/3`,
   auth: {

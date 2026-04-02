@@ -65,6 +65,11 @@ module.exports = function createRuleModel(mongoose) {
         default: true,
         index: true,
       },
+      isDeleted: {
+        type: Boolean,
+        default: false,
+        index: true,
+      },
     },
     { timestamps: true },
   );

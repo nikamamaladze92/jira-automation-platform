@@ -17,10 +17,10 @@ exports.createRule = async (req, res, next) => {
   }
 };
 
-// Get all automation rules
+// Get all non deleted rules
 exports.getRules = async (req, res, next) => {
   try {
-    const rules = await Rule.find().sort("-createdAt");
+    const rules = await Rule.find({ isDeleted: false }).sort("-createdAt");
 
     res.status(200).json({
       status: "success",
@@ -32,10 +32,13 @@ exports.getRules = async (req, res, next) => {
   }
 };
 
-// Get one rule by id
+// Get one non deleted rule by id
 exports.getRule = async (req, res, next) => {
   try {
-    const rule = await Rule.findById(req.params.id);
+    const rule = await Rule.findOne({
+      _id: req.params.id,
+      isDeleted: false,
+    });
 
     if (!rule) {
       return res.status(404).json({
@@ -53,13 +56,20 @@ exports.getRule = async (req, res, next) => {
   }
 };
 
-// Update an existing rule
+// Update one non deleted rule
 exports.updateRule = async (req, res, next) => {
   try {
-    const rule = await Rule.findOneAndUpdate({ _id: req.params.id }, req.body, {
-      returnDocument: "after",
-      runValidators: true,
-    });
+    const rule = await Rule.findOneAndUpdate(
+      {
+        _id: req.params.id,
+        isDeleted: false,
+      },
+      req.body,
+      {
+        returnDocument: "after",
+        runValidators: true,
+      },
+    );
 
     if (!rule) {
       return res.status(404).json({
@@ -77,10 +87,22 @@ exports.updateRule = async (req, res, next) => {
   }
 };
 
-// Delete a rule
+// Soft delete rule  mark it as deleted (hide)
 exports.deleteRule = async (req, res, next) => {
   try {
-    const rule = await Rule.findByIdAndDelete(req.params.id);
+    const rule = await Rule.findOneAndUpdate(
+      {
+        _id: req.params.id,
+        isDeleted: false,
+      },
+      {
+        isDeleted: true,
+        enabled: false,
+      },
+      {
+        returnDocument: "after",
+      },
+    );
 
     if (!rule) {
       return res.status(404).json({
@@ -89,9 +111,10 @@ exports.deleteRule = async (req, res, next) => {
       });
     }
 
-    res.status(204).json({
+    res.status(200).json({
       status: "success",
-      data: null,
+      message: "Rule soft deleted successfully",
+      data: { rule },
     });
   } catch (err) {
     next(err);
