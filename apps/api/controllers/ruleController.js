@@ -3,7 +3,8 @@ const createRuleModel = require("../../shared/models/ruleModel");
 
 const Rule = createRuleModel(mongoose);
 
-exports.createRule = async (req, res) => {
+// Create a new automation rule
+exports.createRule = async (req, res, next) => {
   try {
     const rule = await Rule.create(req.body);
 
@@ -12,14 +13,12 @@ exports.createRule = async (req, res) => {
       data: { rule },
     });
   } catch (err) {
-    res.status(400).json({
-      status: "fail",
-      message: err.message,
-    });
+    next(err);
   }
 };
 
-exports.getRules = async (req, res) => {
+// Get all automation rules
+exports.getRules = async (req, res, next) => {
   try {
     const rules = await Rule.find().sort("-createdAt");
 
@@ -29,9 +28,72 @@ exports.getRules = async (req, res) => {
       data: { rules },
     });
   } catch (err) {
-    res.status(500).json({
-      status: "error",
-      message: err.message,
+    next(err);
+  }
+};
+
+// Get one rule by id
+exports.getRule = async (req, res, next) => {
+  try {
+    const rule = await Rule.findById(req.params.id);
+
+    if (!rule) {
+      return res.status(404).json({
+        status: "fail",
+        message: "No rule found with that ID",
+      });
+    }
+
+    res.status(200).json({
+      status: "success",
+      data: { rule },
     });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Update an existing rule
+exports.updateRule = async (req, res, next) => {
+  try {
+    const rule = await Rule.findOneAndUpdate({ _id: req.params.id }, req.body, {
+      returnDocument: "after",
+      runValidators: true,
+    });
+
+    if (!rule) {
+      return res.status(404).json({
+        status: "fail",
+        message: "No rule found with that ID",
+      });
+    }
+
+    res.status(200).json({
+      status: "success",
+      data: { rule },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Delete a rule
+exports.deleteRule = async (req, res, next) => {
+  try {
+    const rule = await Rule.findByIdAndDelete(req.params.id);
+
+    if (!rule) {
+      return res.status(404).json({
+        status: "fail",
+        message: "No rule found with that ID",
+      });
+    }
+
+    res.status(204).json({
+      status: "success",
+      data: null,
+    });
+  } catch (err) {
+    next(err);
   }
 };

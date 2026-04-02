@@ -1,14 +1,11 @@
 const express = require("express");
-const jobController = require("../controllers/jobController");
+const dashboardController = require("../controllers/dashboardController");
 const authMiddleware = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
 router.use(authMiddleware.protect);
 
-router
-  .route("/")
-  .get(jobController.getJobs)
-  .post(authMiddleware.restrictTo("admin", "manager"), jobController.createJob);
+router.get("/summary", dashboardController.getSummary);
 
 module.exports = router;

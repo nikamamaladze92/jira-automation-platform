@@ -14,4 +14,16 @@ router
     ruleController.createRule,
   );
 
+router
+  .route("/:id")
+  .get(ruleController.getRule)
+  .patch(
+    authMiddleware.restrictTo("admin", "manager"),
+    ruleController.updateRule,
+  )
+  .delete(
+    authMiddleware.restrictTo("admin", "manager"),
+    ruleController.deleteRule,
+  );
+
 module.exports = router;

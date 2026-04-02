@@ -1,16 +1,17 @@
+//  create manual jobs
+//  list jobs for dashboard/admin view
+//  allow filtering by status and limiting result size
+
 const mongoose = require("mongoose");
 const createJobModel = require("../../shared/models/jobModel");
+
 const Job = createJobModel(mongoose);
 
-exports.createJob = async (req, res) => {
+// Create a new job manually.
+// This is useful for testing the worker directly.
+exports.createJob = async (req, res, next) => {
   try {
-    const job = await Job.create({
-      type: req.body.type,
-      issueKey: req.body.issueKey,
-      department: req.body.department,
-      payload: req.body.payload,
-      status: "queued",
-    });
+    const job = await Job.create(req.body);
 
     res.status(201).json({
       status: "success",
@@ -19,21 +20,30 @@ exports.createJob = async (req, res) => {
       },
     });
   } catch (err) {
-    res.status(400).json({
-      status: "fail",
-      message: err.message,
-    });
+    next(err);
   }
 };
 
-exports.getJobs = async (req, res) => {
-  const jobs = await Job.find().sort("-createdAt");
+exports.getJobs = async (req, res, next) => {
+  try {
+    const filter = {};
 
-  res.status(200).json({
-    status: "success",
-    results: jobs.length,
-    data: {
-      jobs,
-    },
-  });
+    if (req.query.status) {
+      filter.status = req.query.status;
+    }
+
+    const limit = Number(req.query.limit) || 50;
+
+    const jobs = await Job.find(filter).sort({ createdAt: -1 }).limit(limit);
+
+    res.status(200).json({
+      status: "success",
+      results: jobs.length,
+      data: {
+        jobs,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
 };
