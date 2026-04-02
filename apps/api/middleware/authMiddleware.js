@@ -1,9 +1,9 @@
 const jwt = require("jsonwebtoken");
+const { promisify } = require("util");
 const mongoose = require("mongoose");
-const createUserModel = require("../models/userModel");
+const createUserModel = require("../../shared/models/userModel");
 
 const User = createUserModel(mongoose);
-
 exports.protect = async (req, res, next) => {
   try {
     let token;
@@ -14,7 +14,7 @@ exports.protect = async (req, res, next) => {
     ) {
       token = req.headers.authorization.split(" ")[1];
     }
-
+    console.log("AUTH HEADER:", req.headers.authorization);
     if (!token) {
       return res.status(401).json({
         status: "fail",
