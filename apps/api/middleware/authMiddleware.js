@@ -24,12 +24,12 @@ exports.protect = async (req, res, next) => {
 
     const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
 
-    const currentUser = await User.findById(decoded.id);
+    const currentUser = await User.findById(decoded.id).select("+active");
 
-    if (!currentUser) {
+    if (!currentUser || currentUser.active === false) {
       return res.status(401).json({
         status: "fail",
-        message: "The user no longer exists",
+        message: "User is inactive or does not exist",
       });
     }
 
@@ -48,7 +48,6 @@ exports.restrictTo = (...roles) => {
         message: "You do not have permission to perform this action",
       });
     }
-
     next();
   };
 };

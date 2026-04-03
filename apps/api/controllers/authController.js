@@ -70,3 +70,96 @@ exports.getMe = async (req, res, next) => {
     next(err);
   }
 };
+
+// for admin
+exports.getUsers = async (req, res, next) => {
+  try {
+    const users = await User.find().select("+active");
+
+    res.status(200).json({
+      status: "success",
+      results: users.length,
+      data: {
+        users,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+//only admin can change role
+exports.updateUserRole = async (req, res, next) => {
+  try {
+    const allowedRoles = ["admin", "manager", "staff"];
+
+    if (!allowedRoles.includes(req.body.role)) {
+      return res.status(400).json({
+        status: "fail",
+        message: "Invalid role value",
+      });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { role: req.body.role },
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        status: "fail",
+        message: "No user found with that ID",
+      });
+    }
+
+    res.status(200).json({
+      status: "success",
+      data: {
+        user,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// admin updates active of user
+exports.updateUserActive = async (req, res, next) => {
+  try {
+    if (typeof req.body.active !== "boolean") {
+      return res.status(400).json({
+        status: "fail",
+        message: "Active must be true or false",
+      });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { active: req.body.active },
+      {
+        new: true,
+        runValidators: true,
+      },
+    ).select("+active");
+
+    if (!user) {
+      return res.status(404).json({
+        status: "fail",
+        message: "No user found with that ID",
+      });
+    }
+
+    res.status(200).json({
+      status: "success",
+      data: {
+        user,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
