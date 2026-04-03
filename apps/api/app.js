@@ -8,6 +8,8 @@ const errorHandler = require("./middleware/errorHandler");
 const authRouter = require("./routes/authRoutes");
 const eventRouter = require("./routes/eventRoutes");
 const dashboardRouter = require("./routes/dashboardRoutes");
+const webhookRouter = require("./routes/webhookRoutes");
+const healthRouter = require("./routes/healthRoutes");
 
 const app = express();
 
@@ -20,6 +22,8 @@ app.use("/api/v1/demo", demoRouter);
 app.use("/api/v1/executions", executionRouter);
 app.use("/api/v1/events", eventRouter);
 app.use("/api/v1/dashboard", dashboardRouter);
+app.use("/api/v1/webhooks", webhookRouter);
+app.use("/api/v1/health", healthRouter);
 
 app.use(errorHandler);
 
