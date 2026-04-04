@@ -14,7 +14,7 @@ exports.protect = async (req, res, next) => {
     ) {
       token = req.headers.authorization.split(" ")[1];
     }
-    console.log("AUTH HEADER:", req.headers.authorization);
+    //console.log("AUTH HEADER:", req.headers.authorization);
     if (!token) {
       return res.status(401).json({
         status: "fail",
