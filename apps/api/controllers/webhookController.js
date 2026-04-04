@@ -33,8 +33,8 @@ function ruleMatchesEvent(rule, event) {
 
 exports.handleJiraWebhook = async (req, res, next) => {
   try {
-    // this is a simplified Jira webhook parser for our project demo
-    // we extract only the fields we need for automation logic
+    // this is a simplified Jira webhook parser for the project demo
+    // extract only the fields need for automation logic
 
     const jiraPayload = req.body;
 

@@ -3,7 +3,7 @@ const createEventModel = require("../../shared/models/eventModel");
 
 const Event = createEventModel(mongoose);
 
-// Get latest events
+// get latest events
 exports.getEvents = async (req, res, next) => {
   try {
     const events = await Event.find().sort({ createdAt: -1 }).limit(50);
@@ -20,7 +20,7 @@ exports.getEvents = async (req, res, next) => {
   }
 };
 
-// Get one event by id
+// get one event by id
 exports.getEvent = async (req, res, next) => {
   try {
     const event = await Event.findById(req.params.id);

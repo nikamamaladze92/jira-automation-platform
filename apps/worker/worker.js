@@ -15,7 +15,7 @@ async function startWorker() {
   console.log(`Worker started: ${WORKER_ID}`);
   try {
     await connectDB();
-    // Make buffering fail fast so we see real connection errors
+    // make buffering fail fast so we see real connection errors
     mongoose.set("bufferCommands", false);
 
     // await mongoose.connect(process.env.DATABASE_ATLAS, {

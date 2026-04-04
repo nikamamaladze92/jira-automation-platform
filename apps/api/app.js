@@ -10,6 +10,7 @@ const eventRouter = require("./routes/eventRoutes");
 const dashboardRouter = require("./routes/dashboardRoutes");
 const webhookRouter = require("./routes/webhookRoutes");
 const healthRouter = require("./routes/healthRoutes");
+const ticketRouter = require("./routes/ticketRoutes");
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.use("/api/v1/events", eventRouter);
 app.use("/api/v1/dashboard", dashboardRouter);
 app.use("/api/v1/webhooks", webhookRouter);
 app.use("/api/v1/health", healthRouter);
+app.use("/api/v1/tickets", ticketRouter);
 
 app.use(errorHandler);
 

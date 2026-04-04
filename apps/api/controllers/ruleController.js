@@ -3,7 +3,7 @@ const createRuleModel = require("../../shared/models/ruleModel");
 
 const Rule = createRuleModel(mongoose);
 
-// Create a new automation rule
+// create a new automation rule
 exports.createRule = async (req, res, next) => {
   try {
     const rule = await Rule.create(req.body);
@@ -17,7 +17,7 @@ exports.createRule = async (req, res, next) => {
   }
 };
 
-// Get all non deleted rules
+// get all non deleted rules
 exports.getRules = async (req, res, next) => {
   try {
     const rules = await Rule.find({ isDeleted: false }).sort("-createdAt");
@@ -32,7 +32,7 @@ exports.getRules = async (req, res, next) => {
   }
 };
 
-// Get one non deleted rule by id
+// get one non deleted rule by id
 exports.getRule = async (req, res, next) => {
   try {
     const rule = await Rule.findOne({
@@ -56,7 +56,7 @@ exports.getRule = async (req, res, next) => {
   }
 };
 
-// Update one non deleted rule
+// update one not deleted rule
 exports.updateRule = async (req, res, next) => {
   try {
     const rule = await Rule.findOneAndUpdate(
@@ -87,7 +87,7 @@ exports.updateRule = async (req, res, next) => {
   }
 };
 
-// Soft delete rule  mark it as deleted (hide)
+// soft delete rule  mark it as deleted (hide)
 exports.deleteRule = async (req, res, next) => {
   try {
     const rule = await Rule.findOneAndUpdate(

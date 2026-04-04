@@ -1,9 +1,8 @@
-// apps/worker/services/jiraService.js
 const axios = require("axios");
 
 function getRequiredEnv(name) {
   const v = process.env[name];
-  if (!v) throw new Error(`Missing env var: ${name}`);
+  if (!v) throw new Error(`missing env variable ${name}`);
   return v;
 }
 
@@ -11,7 +10,7 @@ const baseUrl = getRequiredEnv("JIRA_BASE_URL").replace(/\/$/, "");
 const email = getRequiredEnv("JIRA_EMAIL");
 const token = getRequiredEnv("JIRA_API_TOKEN");
 
-//axios client name it jiraClient !!!!!
+//axios client name it jiraClient !
 const jiraClient = axios.create({
   baseURL: `${baseUrl}/rest/api/3`,
   auth: {
@@ -26,7 +25,7 @@ const jiraClient = axios.create({
 });
 
 exports.addComment = async (issueKey, comment) => {
-  // ADF format required by Jira Cloud
+  // adf format required by jira cloud
   const res = await jiraClient.post(`/issue/${issueKey}/comment`, {
     body: {
       type: "doc",

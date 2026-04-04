@@ -5,7 +5,7 @@ const createJobModel = require("../../shared/models/jobModel");
 
 const Job = createJobModel(mongoose);
 
-// Create a new job
+// create new job
 exports.createJob = async (req, res, next) => {
   try {
     const job = await Job.create(req.body);
@@ -23,7 +23,6 @@ exports.createJob = async (req, res, next) => {
 
 exports.getJobs = catchAsync(async (req, res, next) => {
   const filter = {};
-
   if (req.query.status) {
     filter.status = req.query.status;
   }

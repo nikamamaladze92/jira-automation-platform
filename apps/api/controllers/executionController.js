@@ -3,7 +3,7 @@ const createExecutionModel = require("../../shared/models/execution");
 
 const Execution = createExecutionModel(mongoose);
 
-// Get latest executions
+// get latest executions
 exports.getExecutions = async (req, res, next) => {
   try {
     const executions = await Execution.find().sort({ startedAt: -1 }).limit(50);
@@ -18,7 +18,7 @@ exports.getExecutions = async (req, res, next) => {
   }
 };
 
-// Get one execution by id
+// get one execution by id
 exports.getExecution = async (req, res, next) => {
   try {
     const execution = await Execution.findById(req.params.id);
