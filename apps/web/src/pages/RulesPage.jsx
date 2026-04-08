@@ -1,5 +1,8 @@
+// list automation rules, create new rule, sofr delte, restrict admin actions in ui
+
 import { useEffect, useState } from "react";
 import client from "../api/client";
+import { useAuth } from "../context/AuthContext";
 
 const initialForm = {
   name: "",
@@ -10,11 +13,15 @@ const initialForm = {
 };
 
 export default function RulesPage() {
+  const { user } = useAuth();
+
   const [rules, setRules] = useState([]);
   const [form, setForm] = useState(initialForm);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  const canManageRules = user?.role === "admin" || user?.role === "manager";
 
   const loadRules = async () => {
     try {
@@ -75,7 +82,7 @@ export default function RulesPage() {
       setForm(initialForm);
       await loadRules();
     } catch (err) {
-      setError(err.response?.data?.message || "failed to create rule");
+      setError(err.response?.data?.message || "Failed to create rule");
     } finally {
       setSubmitting(false);
     }
@@ -88,7 +95,7 @@ export default function RulesPage() {
       });
       await loadRules();
     } catch (err) {
-      setError(err.response?.data?.message || "failed to update rule");
+      setError(err.response?.data?.message || "Failed to update rule");
     }
   };
 
@@ -97,7 +104,7 @@ export default function RulesPage() {
       await client.delete(`/rules/${id}`);
       await loadRules();
     } catch (err) {
-      setError(err.response?.data?.message || "failed to delete rule");
+      setError(err.response?.data?.message || "Failed to delete rule");
     }
   };
 
@@ -108,68 +115,65 @@ export default function RulesPage() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "1fr 1.4fr",
+          gridTemplateColumns: canManageRules ? "1fr 1.4fr" : "1fr",
           gap: "24px",
           alignItems: "start",
         }}
       >
-        <div
-          style={{
-            background: "#fff",
-            border: "1px solid #e5e5e5",
-            borderRadius: "12px",
-            padding: "20px",
-          }}
-        >
-          <h2>Create Rule</h2>
-
-          <form
-            onSubmit={handleCreateRule}
-            style={{ display: "flex", flexDirection: "column", gap: "12px" }}
+        {canManageRules && (
+          <div
+            style={{
+              background: "#fff",
+              border: "1px solid #e5e5e5",
+              borderRadius: "12px",
+              padding: "20px",
+            }}
           >
-            <input
-              name="name"
-              placeholder="Rule name"
-              value={form.name}
-              onChange={handleChange}
-            />
+            <h2>Create Rule</h2>
+            <form
+              onSubmit={handleCreateRule}
+              style={{ display: "flex", flexDirection: "column", gap: "12px" }}
+            >
+              <input
+                name="name"
+                placeholder="Rule name"
+                value={form.name}
+                onChange={handleChange}
+              />
+              <input
+                name="trigger"
+                value={form.trigger}
+                onChange={handleChange}
+              />
+              <input
+                name="priority"
+                placeholder="Priority"
+                value={form.priority}
+                onChange={handleChange}
+              />
+              <input
+                name="department"
+                placeholder="Department"
+                value={form.department}
+                onChange={handleChange}
+              />
+              <textarea
+                name="comment"
+                placeholder="Comment to add"
+                value={form.comment}
+                onChange={handleChange}
+                rows={4}
+              />
+              <button type="submit" disabled={submitting}>
+                {submitting ? "Creating..." : "Create Rule"}
+              </button>
+            </form>
 
-            <input
-              name="trigger"
-              value={form.trigger}
-              onChange={handleChange}
-            />
-
-            <input
-              name="priority"
-              placeholder="Priority"
-              value={form.priority}
-              onChange={handleChange}
-            />
-
-            <input
-              name="department"
-              placeholder="Department"
-              value={form.department}
-              onChange={handleChange}
-            />
-
-            <textarea
-              name="comment"
-              placeholder="Comment to add"
-              value={form.comment}
-              onChange={handleChange}
-              rows={4}
-            />
-
-            <button type="submit" disabled={submitting}>
-              {submitting ? "Creating..." : "Create Rule"}
-            </button>
-          </form>
-
-          {error && <p style={{ color: "red", marginTop: "12px" }}>{error}</p>}
-        </div>
-
+            {error && (
+              <p style={{ color: "red", marginTop: "12px" }}>{error}</p>
+            )}
+          </div>
+        )}
         <div
           style={{
             background: "#fff",
@@ -179,7 +183,6 @@ export default function RulesPage() {
           }}
         >
           <h2>Existing Rules</h2>
-
           {loading ? (
             <p>Loading rules...</p>
           ) : rules.length === 0 ? (
@@ -205,17 +208,22 @@ export default function RulesPage() {
                     <strong>Status:</strong>{" "}
                     {rule.enabled ? "Enabled" : "Disabled"}
                   </p>
-
-                  <div
-                    style={{ display: "flex", gap: "10px", marginTop: "12px" }}
-                  >
-                    <button onClick={() => handleToggleRule(rule)}>
-                      {rule.enabled ? "Disable" : "Enable"}
-                    </button>
-                    <button onClick={() => handleDeleteRule(rule._id)}>
-                      Delete
-                    </button>
-                  </div>
+                  {canManageRules && (
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: "10px",
+                        marginTop: "12px",
+                      }}
+                    >
+                      <button onClick={() => handleToggleRule(rule)}>
+                        {rule.enabled ? "Disable" : "Enable"}
+                      </button>
+                      <button onClick={() => handleDeleteRule(rule._id)}>
+                        Delete
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
