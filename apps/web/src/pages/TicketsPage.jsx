@@ -50,9 +50,14 @@ export default function TicketsPage() {
   };
 
   return (
+    // <div>
+    //   <h1 style={{ marginBottom: "20px" }}>Create Ticket</h1>
     <div>
-      <h1 style={{ marginBottom: "20px" }}>Create Ticket</h1>
-
+      <h1 style={{ marginBottom: "8px" }}>Create Ticket</h1>
+      <p style={{ marginTop: 0, color: "#666", marginBottom: "20px" }}>
+        Submit a ticket from the internal dashboard and send it directly to
+        Jira.
+      </p>
       <div
         style={{
           maxWidth: "700px",

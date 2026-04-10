@@ -41,9 +41,14 @@ export default function DemoPage() {
   };
 
   return (
+    // <div>
+    //   <h1 style={{ marginBottom: "20px" }}>Demo Event Trigger</h1>
     <div>
-      <h1 style={{ marginBottom: "20px" }}>Demo Event Trigger</h1>
-
+      <h1 style={{ marginBottom: "8px" }}>Demo Trigger</h1>
+      <p style={{ marginTop: 0, color: "#666", marginBottom: "20px" }}>
+        Use this page to simulate an incoming event and show the full automation
+        flow: rule match → job creation → worker execution.
+      </p>
       <div
         style={{
           display: "grid",
