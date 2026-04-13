@@ -108,6 +108,12 @@ module.exports = function createJobModel(mongoose) {
       actionIndex: {
         type: Number,
       },
+      dedupeKey: {
+        type: String,
+        unique: true,
+        sparse: true,
+        index: true,
+      },
       status: {
         type: String,
         enum: ["queued", "processing", "succeeded", "failed"],

@@ -159,6 +159,7 @@ exports.handleJiraWebhook = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     status: "success",
+    duplicate: result.duplicate,
     results: result.jobs.length,
     data: {
       event: result.event,
@@ -168,5 +169,8 @@ exports.handleJiraWebhook = catchAsync(async (req, res, next) => {
       })),
       jobs: result.jobs,
     },
+    message: result.duplicate
+      ? "duplicate webhook event ignored"
+      : "webhook event processed successfully",
   });
 });

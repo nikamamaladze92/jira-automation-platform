@@ -1,3 +1,4 @@
+const crypto = require("crypto");
 const mongoose = require("mongoose");
 const createRuleModel = require("../../shared/models/ruleModel");
 const createJobModel = require("../../shared/models/jobModel");
@@ -27,10 +28,37 @@ function ruleMatchesEvent(rule, event) {
   if (normalizeValue(rule.trigger) !== normalizeValue(event.eventType)) {
     return false;
   }
-
   return rule.conditions.every((condition) =>
     matchesCondition(event, condition),
   );
+}
+
+function buildEventFingerprint({
+  source,
+  eventType,
+  issueKey,
+  priority,
+  department,
+}) {
+  const raw = JSON.stringify({
+    source: normalizeValue(source),
+    eventType: normalizeValue(eventType),
+    issueKey: normalizeValue(issueKey),
+    priority: normalizeValue(priority),
+    department: normalizeValue(department),
+  });
+  return crypto.createHash("sha256").update(raw).digest("hex");
+}
+
+function buildJobDedupeKey({ eventId, ruleId, actionIndex, type, issueKey }) {
+  const raw = JSON.stringify({
+    eventId: String(eventId),
+    ruleId: String(ruleId),
+    actionIndex,
+    type: normalizeValue(type),
+    issueKey: normalizeValue(issueKey),
+  });
+  return crypto.createHash("sha256").update(raw).digest("hex");
 }
 
 async function createJobsFromMatchedRules(savedEvent, matchedRules) {
@@ -43,21 +71,39 @@ async function createJobsFromMatchedRules(savedEvent, matchedRules) {
       actionIndex++
     ) {
       const action = rule.actions[actionIndex];
-
-      const job = await Job.create({
-        type: action.type,
-        issueKey: savedEvent.issueKey,
-        payload: action.payload,
-        status: "queued",
+      const dedupeKey = buildJobDedupeKey({
         eventId: savedEvent._id,
         ruleId: rule._id,
         actionIndex,
+        type: action.type,
+        issueKey: savedEvent.issueKey,
       });
 
-      jobs.push(job);
+      try {
+        const job = await Job.create({
+          type: action.type,
+          issueKey: savedEvent.issueKey,
+          payload: action.payload,
+          status: "queued",
+          eventId: savedEvent._id,
+          ruleId: rule._id,
+          actionIndex,
+          dedupeKey,
+        });
+
+        jobs.push(job);
+      } catch (err) {
+        if (err.code === 11000) {
+          const existingJob = await Job.findOne({ dedupeKey });
+          if (existingJob) {
+            jobs.push(existingJob);
+            continue;
+          }
+        }
+        throw err;
+      }
     }
   }
-
   return jobs;
 }
 
@@ -69,24 +115,45 @@ async function processIncomingEvent({
   department,
   payload,
 }) {
-  const savedEvent = await Event.create({
-    source,
-    eventType,
-    issueKey,
+  const normalizedEvent = {
+    source: normalizeValue(source),
+    eventType: normalizeValue(eventType),
+    issueKey: issueKey ? String(issueKey).trim() : "",
     priority: normalizeValue(priority),
     department: normalizeValue(department),
     payload,
-    processed: false,
-  });
+  };
+
+  const eventFingerprint = buildEventFingerprint(normalizedEvent);
+  let savedEvent;
+  try {
+    savedEvent = await Event.create({
+      ...normalizedEvent,
+      processed: false,
+      eventFingerprint,
+    });
+  } catch (err) {
+    if (err.code === 11000) {
+      const existingEvent = await Event.findOne({ eventFingerprint });
+
+      return {
+        event: existingEvent,
+        matchedRules: [],
+        jobs: [],
+        duplicate: true,
+      };
+    }
+    throw err;
+  }
 
   const rules = await Rule.find({
     enabled: true,
     isDeleted: false,
-    trigger: savedEvent.eventType,
+    trigger: normalizedEvent.eventType,
   });
 
   const matchedRules = rules.filter((rule) =>
-    ruleMatchesEvent(rule, savedEvent),
+    ruleMatchesEvent(rule, normalizedEvent),
   );
 
   const jobs = await createJobsFromMatchedRules(savedEvent, matchedRules);
@@ -98,6 +165,7 @@ async function processIncomingEvent({
     event: savedEvent,
     matchedRules,
     jobs,
+    duplicate: false,
   };
 }
 
@@ -106,4 +174,6 @@ module.exports = {
   normalizeValue,
   matchesCondition,
   ruleMatchesEvent,
+  buildEventFingerprint,
+  buildJobDedupeKey,
 };

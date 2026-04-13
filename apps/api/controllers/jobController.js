@@ -21,12 +21,23 @@ exports.createJob = async (req, res, next) => {
   }
 };
 
-exports.getJobs = catchAsync(async (req, res, next) => {
+exports.getJobs = catchAsync(async (req, res) => {
   const filter = {};
+
   if (req.query.status) {
     filter.status = req.query.status;
   }
+
+  if (req.query.type) {
+    filter.type = req.query.type;
+  }
+
+  if (req.query.issueKey) {
+    filter.issueKey = req.query.issueKey.trim();
+  }
+
   const limit = Number(req.query.limit) || 50;
+
   const jobs = await Job.find(filter).sort({ createdAt: -1 }).limit(limit);
 
   res.status(200).json({

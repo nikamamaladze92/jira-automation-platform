@@ -1,13 +1,9 @@
-// create jira tickets from dashboard
-
 import { useState } from "react";
 import client from "../api/client";
 
 const initialForm = {
-  projectKey: "",
   summary: "",
   description: "",
-  issueType: "Task",
   priority: "High",
 };
 
@@ -16,6 +12,7 @@ export default function TicketsPage() {
   const [createdTicket, setCreatedTicket] = useState(null);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [rawResponse, setRawResponse] = useState(null);
 
   const handleChange = (e) => {
     setForm((prev) => ({
@@ -28,36 +25,35 @@ export default function TicketsPage() {
     e.preventDefault();
     setError("");
     setCreatedTicket(null);
+    setRawResponse(null);
 
     try {
       setSubmitting(true);
 
       const res = await client.post("/tickets", {
-        projectKey: form.projectKey,
-        summary: form.summary,
-        description: form.description,
-        issueType: form.issueType,
+        summary: form.summary.trim(),
+        description: form.description.trim(),
         priority: form.priority,
       });
 
+      setRawResponse(res.data);
       setCreatedTicket(res.data.data.ticket);
       setForm(initialForm);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to create ticket");
+      setRawResponse(err.response?.data || null);
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    // <div>
-    //   <h1 style={{ marginBottom: "20px" }}>Create Ticket</h1>
     <div>
       <h1 style={{ marginBottom: "8px" }}>Create Ticket</h1>
       <p style={{ marginTop: 0, color: "#666", marginBottom: "20px" }}>
-        Submit a ticket from the internal dashboard and send it directly to
-        Jira.
+        Create a Jira service ticket from a clean internal form.
       </p>
+
       <div
         style={{
           maxWidth: "700px",
@@ -71,52 +67,66 @@ export default function TicketsPage() {
           onSubmit={handleSubmit}
           style={{ display: "flex", flexDirection: "column", gap: "12px" }}
         >
-          <input
-            name="projectKey"
-            placeholder="Project Key (example: CAR)"
-            value={form.projectKey}
-            onChange={handleChange}
-          />
+          <label>
+            <div style={{ marginBottom: "6px", fontWeight: 600 }}>Summary</div>
+            <input
+              name="summary"
+              placeholder="Brake inspection request"
+              value={form.summary}
+              onChange={handleChange}
+              required
+            />
+          </label>
 
-          <input
-            name="summary"
-            placeholder="Ticket summary"
-            value={form.summary}
-            onChange={handleChange}
-          />
+          <label>
+            <div style={{ marginBottom: "6px", fontWeight: 600 }}>
+              Description
+            </div>
+            <textarea
+              name="description"
+              placeholder="Customer reports brake noise during driving."
+              value={form.description}
+              onChange={handleChange}
+              rows={5}
+              required
+            />
+          </label>
 
-          <textarea
-            name="description"
-            placeholder="Ticket description"
-            value={form.description}
-            onChange={handleChange}
-            rows={5}
-          />
-
-          <select
-            name="issueType"
-            value={form.issueType}
-            onChange={handleChange}
-          >
-            <option value="Task">Task</option>
-            <option value="Bug">Bug</option>
-            <option value="Story">Story</option>
-          </select>
-
-          <select name="priority" value={form.priority} onChange={handleChange}>
-            <option value="Highest">Highest</option>
-            <option value="High">High</option>
-            <option value="Medium">Medium</option>
-            <option value="Low">Low</option>
-            <option value="Lowest">Lowest</option>
-          </select>
+          <label>
+            <div style={{ marginBottom: "6px", fontWeight: 600 }}>Priority</div>
+            <select
+              name="priority"
+              value={form.priority}
+              onChange={handleChange}
+            >
+              <option value="Highest">Highest</option>
+              <option value="High">High</option>
+              <option value="Medium">Medium</option>
+              <option value="Low">Low</option>
+              <option value="Lowest">Lowest</option>
+            </select>
+          </label>
 
           <button type="submit" disabled={submitting}>
             {submitting ? "Creating..." : "Create Ticket"}
           </button>
         </form>
 
-        {error && <p style={{ color: "red", marginTop: "14px" }}>{error}</p>}
+        {error && (
+          <div
+            style={{
+              color: "red",
+              marginTop: "14px",
+              background: "#fff5f5",
+              border: "1px solid #f3c2c2",
+              borderRadius: "10px",
+              padding: "12px",
+            }}
+          >
+            <strong>Ticket creation failed:</strong>
+            <div style={{ marginTop: "6px" }}>{error}</div>
+          </div>
+        )}
 
         {createdTicket && (
           <div
@@ -135,6 +145,30 @@ export default function TicketsPage() {
             <p style={{ margin: "6px 0" }}>
               <strong>ID:</strong> {createdTicket.id}
             </p>
+          </div>
+        )}
+
+        {rawResponse && (
+          <div
+            style={{
+              marginTop: "16px",
+              background: "#f8f8f8",
+              border: "1px solid #e5e5e5",
+              borderRadius: "8px",
+              padding: "10px",
+            }}
+          >
+            <strong>Latest API Response:</strong>
+            <pre
+              style={{
+                marginTop: "8px",
+                whiteSpace: "pre-wrap",
+                wordBreak: "break-word",
+                fontSize: "12px",
+              }}
+            >
+              {JSON.stringify(rawResponse, null, 2)}
+            </pre>
           </div>
         )}
       </div>

@@ -1,14 +1,12 @@
-// get dashboard ticket requests, crate the issue and return issue info
-
 const catchAsync = require("../utils/catchAsync");
 const jiraTicketService = require("../services/jiraTicketService");
 
-exports.createTicket = catchAsync(async (req, res, next) => {
+exports.createTicket = catchAsync(async (req, res) => {
   const jiraIssue = await jiraTicketService.createIssue({
-    projectKey: req.body.projectKey,
+    projectKey: "KAN",
     summary: req.body.summary,
     description: req.body.description,
-    issueType: req.body.issueType || "Task",
+    issueType: "Task",
     priority: req.body.priority,
   });
 

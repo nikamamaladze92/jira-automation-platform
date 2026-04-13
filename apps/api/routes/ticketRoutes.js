@@ -11,10 +11,19 @@ router.use(authMiddleware.protect);
 
 router.post(
   "/",
-  body("projectKey").notEmpty().withMessage("Project key is required"),
-  body("summary").notEmpty().withMessage("Summary is required"),
-  body("description").notEmpty().withMessage("Description is required"),
-
+  [
+    body("summary").trim().notEmpty().withMessage("Summary is required"),
+    body("description")
+      .trim()
+      .notEmpty()
+      .withMessage("Description is required"),
+    body("priority")
+      .trim()
+      .notEmpty()
+      .withMessage("Priority is required")
+      .isIn(["Highest", "High", "Medium", "Low", "Lowest"])
+      .withMessage("Priority must be Highest, High, Medium, Low, or Lowest"),
+  ],
   validate,
   ticketController.createTicket,
 );

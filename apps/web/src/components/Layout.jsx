@@ -38,6 +38,7 @@ export default function Layout({ children }) {
           <Link to="/">Overview</Link>
           <Link to="/tickets">Create Ticket</Link>
           <Link to="/rules">Automation Rules</Link>
+          <Link to="/jobs">Jobs</Link>
           <Link to="/executions">Execution History</Link>
           <Link to="/events">Event Stream</Link>
           <Link to="/demo">Demo Trigger</Link>

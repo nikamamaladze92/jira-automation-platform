@@ -108,6 +108,7 @@ exports.triggerDemoEvent = async (req, res) => {
 
     res.status(200).json({
       status: "success",
+      duplicate: result.duplicate,
       results: result.jobs.length,
       data: {
         event: result.event,
@@ -117,6 +118,9 @@ exports.triggerDemoEvent = async (req, res) => {
         })),
         jobs: result.jobs,
       },
+      message: result.duplicate
+        ? "Duplicate event ignored"
+        : "Event processed successfully",
     });
   } catch (err) {
     res.status(400).json({

@@ -11,6 +11,7 @@ import EventsPage from "./pages/EventsPage";
 import UsersPage from "./pages/UsersPage";
 import DemoPage from "./pages/DemoPage";
 import RoleRoute from "./components/RoleRoute";
+import JobsPage from "./pages/jobsPage";
 
 export default function App() {
   return (
@@ -94,6 +95,16 @@ export default function App() {
               <RoleRoute roles={["admin"]}>
                 <UsersPage />
               </RoleRoute>
+            }
+          />
+          <Route
+            path="/jobs"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <JobsPage />
+                </Layout>
+              </ProtectedRoute>
             }
           />
         </Routes>
