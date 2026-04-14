@@ -25,10 +25,10 @@ module.exports = function createRuleModel(mongoose) {
         type: String,
         required: true,
         enum: [
-          "ADD_COMMENT",
-          "TRANSITION_ISSUE",
-          "ASSIGN_ISSUE",
-          "UPDATE_FIELD",
+          "ADD COMMENT",
+          "TRANSITION ISSUE",
+          "ASSIGN ISSUE",
+          "UPDATE FIELD",
         ],
       },
       payload: {
@@ -49,7 +49,7 @@ module.exports = function createRuleModel(mongoose) {
       trigger: {
         type: String,
         required: true,
-        enum: ["issue_created"],
+        enum: ["issue created"],
         index: true,
       },
       conditions: {

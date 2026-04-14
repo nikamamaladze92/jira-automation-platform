@@ -157,7 +157,7 @@ export default function TicketsPage() {
             </label>
 
             <button type="submit" disabled={submitting}>
-              {submitting ? "Creating..." : "Create Ticket"}
+              {submitting ? "Creating" : "Create Ticket"}
             </button>
           </form>
 

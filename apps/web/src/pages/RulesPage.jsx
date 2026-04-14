@@ -7,22 +7,84 @@ const priorityOptions = ["high", "medium", "low"];
 const departmentOptions = [
   "warehouse",
   "mechanic",
-  "body_shop",
+  "body shop",
   "painting",
   "inspection",
-  "customer_service",
+  "customer service",
 ];
 
 const initialForm = {
   name: "",
-  priority: "high",
-  department: "warehouse",
+  priority: "",
+  department: "",
   comment: "",
 };
 
+function formatConditionField(field) {
+  switch (field) {
+    case "priority":
+      return "Priority";
+    case "department":
+      return "Department";
+    case "eventType":
+      return "Event type";
+    default:
+      return field;
+  }
+}
+
+function formatConditionOperator(operator) {
+  switch (operator) {
+    case "equals":
+      return "is";
+    default:
+      return operator;
+  }
+}
+
+function formatConditionValue(field, value) {
+  if (field === "priority") {
+    return value.charAt(0).toUpperCase() + value.slice(1);
+  }
+
+  if (field === "department") {
+    switch (value) {
+      case "warehouse":
+        return "Warehouse";
+      case "mechanic":
+        return "Mechanic";
+      case "body shop":
+        return "Body Shop";
+      case "painting":
+        return "Painting";
+      case "inspection":
+        return "Inspection";
+      case "customer service":
+        return "Customer Service";
+      default:
+        return value;
+    }
+  }
+  return value;
+}
+function getActionLabel(type) {
+  switch (type) {
+    case "ADD COMMENT":
+      return "Add Jira comment";
+    case "TRANSITION ISSUE":
+      return "Transition issue";
+    case "ASSIGN ISSUE":
+      return "Assign issue";
+    case "UPDATE FIELD":
+      return "Update field";
+    default:
+      return type;
+  }
+}
+
 function getActionSummary(action) {
   switch (action.type) {
-    case "ADD_COMMENT":
+    case "ADD COMMENT":
       return `Comment: ${action.payload?.comment || "-"}`;
     default:
       return "Unknown action";
@@ -90,7 +152,7 @@ export default function RulesPage() {
         ],
         actions: [
           {
-            type: "ADD_COMMENT",
+            type: "ADD COMMENT",
             payload: {
               comment: form.comment.trim(),
             },
@@ -133,10 +195,6 @@ export default function RulesPage() {
   return (
     <div>
       <h1 style={{ marginBottom: "8px" }}>Automation Rules</h1>
-      <p style={{ marginTop: 0, color: "#666", marginBottom: "20px" }}>
-        Rules define when the system should react to an event and what comment
-        it should add to the matched Jira issue.
-      </p>
 
       <div
         style={{
@@ -167,7 +225,7 @@ export default function RulesPage() {
                 </div>
                 <input
                   name="name"
-                  placeholder="High priority warehouse comment"
+                  placeholder=""
                   value={form.name}
                   onChange={handleChange}
                   required
@@ -176,13 +234,15 @@ export default function RulesPage() {
 
               <label>
                 <div style={{ marginBottom: "6px", fontWeight: 600 }}>
-                  Priority Condition
+                  Priority
                 </div>
                 <select
                   name="priority"
                   value={form.priority}
                   onChange={handleChange}
+                  required
                 >
+                  <option value="">Select priority</option>
                   {priorityOptions.map((priority) => (
                     <option key={priority} value={priority}>
                       {priority}
@@ -193,13 +253,15 @@ export default function RulesPage() {
 
               <label>
                 <div style={{ marginBottom: "6px", fontWeight: 600 }}>
-                  Department Condition
+                  Department
                 </div>
                 <select
                   name="department"
                   value={form.department}
                   onChange={handleChange}
+                  required
                 >
+                  <option value="">Select department</option>
                   {departmentOptions.map((department) => (
                     <option key={department} value={department}>
                       {department}
@@ -214,7 +276,7 @@ export default function RulesPage() {
                 </div>
                 <textarea
                   name="comment"
-                  placeholder="Warehouse manager has been notified."
+                  // placeholder=""
                   value={form.comment}
                   onChange={handleChange}
                   rows={4}
@@ -244,9 +306,9 @@ export default function RulesPage() {
           <h2 style={{ marginTop: 0 }}>Existing Rules</h2>
 
           {loading ? (
-            <p>Loading rules...</p>
+            <p>Loading rules</p>
           ) : rules.length === 0 ? (
-            <p>No rules found.</p>
+            <p>No rules found</p>
           ) : (
             <div
               style={{ display: "flex", flexDirection: "column", gap: "12px" }}
@@ -279,8 +341,12 @@ export default function RulesPage() {
                       <ul style={{ marginTop: "6px", paddingLeft: "18px" }}>
                         {rule.conditions.map((condition, index) => (
                           <li key={`${condition.field}-${index}`}>
-                            {condition.field} {condition.operator}{" "}
-                            {condition.value}
+                            {formatConditionField(condition.field)}{" "}
+                            {formatConditionOperator(condition.operator)}{" "}
+                            {formatConditionValue(
+                              condition.field,
+                              condition.value,
+                            )}
                           </li>
                         ))}
                       </ul>
@@ -294,8 +360,9 @@ export default function RulesPage() {
                     {rule.actions?.length ? (
                       <ul style={{ marginTop: "6px", paddingLeft: "18px" }}>
                         {rule.actions.map((action, index) => (
-                          <li key={`${action.type}-${index}`}>
-                            {action.type} — {getActionSummary(action)}
+                          <li key={`${action.type}: ${index}`}>
+                            {getActionLabel(action.type)}:{" "}
+                            {getActionSummary(action)}
                           </li>
                         ))}
                       </ul>
