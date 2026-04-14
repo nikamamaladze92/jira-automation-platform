@@ -1,8 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import client from "../api/client";
 import { useAuth } from "../context/AuthContext";
-
-const triggerOptions = [{ value: "issue_created", label: "Issue Created" }];
 
 const priorityOptions = ["high", "medium", "low"];
 
@@ -15,44 +13,17 @@ const departmentOptions = [
   "customer_service",
 ];
 
-const actionOptions = [
-  { value: "ADD_COMMENT", label: "Add Comment" },
-  { value: "ASSIGN_ISSUE", label: "Assign Issue" },
-];
-
 const initialForm = {
   name: "",
-  trigger: "issue_created",
   priority: "high",
   department: "warehouse",
-  actionType: "ADD_COMMENT",
   comment: "",
-  accountId: "",
 };
-
-function buildActionPayload(form) {
-  switch (form.actionType) {
-    case "ADD_COMMENT":
-      return {
-        comment: form.comment,
-      };
-
-    case "ASSIGN_ISSUE":
-      return {
-        accountId: form.accountId,
-      };
-
-    default:
-      return {};
-  }
-}
 
 function getActionSummary(action) {
   switch (action.type) {
     case "ADD_COMMENT":
       return `Comment: ${action.payload?.comment || "-"}`;
-    case "ASSIGN_ISSUE":
-      return `Account ID: ${action.payload?.accountId || "-"}`;
     default:
       return "Unknown action";
   }
@@ -68,17 +39,6 @@ export default function RulesPage() {
   const [submitting, setSubmitting] = useState(false);
 
   const canManageRules = user?.role === "admin" || user?.role === "manager";
-
-  const actionHelpText = useMemo(() => {
-    switch (form.actionType) {
-      case "ADD_COMMENT":
-        return "Adds a Jira comment to the matched issue. Use this for team coordination, notes, or audit trail messages.";
-      case "ASSIGN_ISSUE":
-        return "Assigns the matched issue to a specific Jira user by account ID. Use this for routing work to the correct owner.";
-      default:
-        return "";
-    }
-  }, [form.actionType]);
 
   const loadRules = async () => {
     try {
@@ -113,11 +73,9 @@ export default function RulesPage() {
     try {
       setSubmitting(true);
 
-      const actionPayload = buildActionPayload(form);
-
       await client.post("/rules", {
         name: form.name.trim(),
-        trigger: form.trigger,
+        trigger: "issue created",
         conditions: [
           {
             field: "priority",
@@ -132,8 +90,10 @@ export default function RulesPage() {
         ],
         actions: [
           {
-            type: form.actionType,
-            payload: actionPayload,
+            type: "ADD_COMMENT",
+            payload: {
+              comment: form.comment.trim(),
+            },
           },
         ],
         enabled: true,
@@ -174,8 +134,8 @@ export default function RulesPage() {
     <div>
       <h1 style={{ marginBottom: "8px" }}>Automation Rules</h1>
       <p style={{ marginTop: 0, color: "#666", marginBottom: "20px" }}>
-        Rules define when the system should react to an event and what action it
-        should perform on the matched Jira issue.
+        Rules define when the system should react to an event and what comment
+        it should add to the matched Jira issue.
       </p>
 
       <div
@@ -207,28 +167,11 @@ export default function RulesPage() {
                 </div>
                 <input
                   name="name"
-                  placeholder="High priority warehouse routing"
+                  placeholder="High priority warehouse comment"
                   value={form.name}
                   onChange={handleChange}
                   required
                 />
-              </label>
-
-              <label>
-                <div style={{ marginBottom: "6px", fontWeight: 600 }}>
-                  Trigger
-                </div>
-                <select
-                  name="trigger"
-                  value={form.trigger}
-                  onChange={handleChange}
-                >
-                  {triggerOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
               </label>
 
               <label>
@@ -267,64 +210,17 @@ export default function RulesPage() {
 
               <label>
                 <div style={{ marginBottom: "6px", fontWeight: 600 }}>
-                  Action Type
+                  Comment
                 </div>
-                <select
-                  name="actionType"
-                  value={form.actionType}
+                <textarea
+                  name="comment"
+                  placeholder="Warehouse manager has been notified."
+                  value={form.comment}
                   onChange={handleChange}
-                >
-                  {actionOptions.map((action) => (
-                    <option key={action.value} value={action.value}>
-                      {action.label}
-                    </option>
-                  ))}
-                </select>
+                  rows={4}
+                  required
+                />
               </label>
-
-              <p
-                style={{
-                  margin: 0,
-                  color: "#666",
-                  fontSize: "14px",
-                  background: "#f8f8f8",
-                  padding: "10px",
-                  borderRadius: "8px",
-                }}
-              >
-                {actionHelpText}
-              </p>
-
-              {form.actionType === "ADD_COMMENT" && (
-                <label>
-                  <div style={{ marginBottom: "6px", fontWeight: 600 }}>
-                    Comment
-                  </div>
-                  <textarea
-                    name="comment"
-                    placeholder="Warehouse manager has been notified."
-                    value={form.comment}
-                    onChange={handleChange}
-                    rows={4}
-                    required
-                  />
-                </label>
-              )}
-
-              {form.actionType === "ASSIGN_ISSUE" && (
-                <label>
-                  <div style={{ marginBottom: "6px", fontWeight: 600 }}>
-                    Jira Account ID
-                  </div>
-                  <input
-                    name="accountId"
-                    placeholder="5b10a2844c20165700ede21g"
-                    value={form.accountId}
-                    onChange={handleChange}
-                    required
-                  />
-                </label>
-              )}
 
               <button type="submit" disabled={submitting}>
                 {submitting ? "Creating..." : "Create Rule"}
