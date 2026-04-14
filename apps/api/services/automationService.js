@@ -15,10 +15,21 @@ function normalizeValue(value) {
 
 function matchesCondition(event, condition) {
   const actualValue = event[condition.field];
+  const normalizedActual = normalizeValue(actualValue);
+  const normalizedExpected = normalizeValue(condition.value);
+
+  console.log("Checking condition:", {
+    field: condition.field,
+    operator: condition.operator,
+    actualValue,
+    normalizedActual,
+    expectedValue: condition.value,
+    normalizedExpected,
+  });
 
   switch (condition.operator) {
     case "equals":
-      return normalizeValue(actualValue) === normalizeValue(condition.value);
+      return normalizedActual === normalizedExpected;
     default:
       return false;
   }
@@ -124,8 +135,13 @@ async function processIncomingEvent({
     payload,
   };
 
+  console.log("=== PROCESS INCOMING EVENT ===");
+  console.log("Normalized event:", normalizedEvent);
+
   const eventFingerprint = buildEventFingerprint(normalizedEvent);
+
   let savedEvent;
+
   try {
     savedEvent = await Event.create({
       ...normalizedEvent,
@@ -136,6 +152,8 @@ async function processIncomingEvent({
     if (err.code === 11000) {
       const existingEvent = await Event.findOne({ eventFingerprint });
 
+      console.log("Duplicate event detected:", eventFingerprint);
+
       return {
         event: existingEvent,
         matchedRules: [],
@@ -143,6 +161,7 @@ async function processIncomingEvent({
         duplicate: true,
       };
     }
+
     throw err;
   }
 
@@ -152,11 +171,42 @@ async function processIncomingEvent({
     trigger: normalizedEvent.eventType,
   });
 
+  console.log(
+    "Candidate rules:",
+    rules.map((rule) => ({
+      id: rule._id,
+      name: rule.name,
+      trigger: rule.trigger,
+      enabled: rule.enabled,
+      isDeleted: rule.isDeleted,
+      conditions: rule.conditions,
+      actions: rule.actions,
+    })),
+  );
+
   const matchedRules = rules.filter((rule) =>
     ruleMatchesEvent(rule, normalizedEvent),
   );
 
+  console.log(
+    "Matched rules:",
+    matchedRules.map((rule) => ({
+      id: rule._id,
+      name: rule.name,
+    })),
+  );
+
   const jobs = await createJobsFromMatchedRules(savedEvent, matchedRules);
+
+  console.log(
+    "Created jobs:",
+    jobs.map((job) => ({
+      id: job._id,
+      type: job.type,
+      issueKey: job.issueKey,
+      status: job.status,
+    })),
+  );
 
   savedEvent.processed = true;
   await savedEvent.save();

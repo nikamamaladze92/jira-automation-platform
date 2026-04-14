@@ -1,33 +1,3 @@
-// const catchAsync = require("../utils/catchAsync");
-// const jiraTicketService = require("../services/jiraTicketService");
-
-// exports.createTicket = catchAsync(async (req, res) => {
-//   const { summary, description, priority, department } = req.body;
-
-//   const jiraIssue = await jiraTicketService.createIssue({
-//     projectKey: "KAN",
-//     summary,
-//     description,
-//     issueType: "Task",
-//     priority,
-//   });
-
-//   res.status(201).json({
-//     status: "success",
-//     data: {
-//       ticket: jiraIssue,
-//       metadata: {
-//         department,
-//         priority,
-//       },
-//     },
-//   });
-// });
-
-//
-//
-//
-
 const catchAsync = require("../utils/catchAsync");
 const jiraTicketService = require("../services/jiraTicketService");
 const { processIncomingEvent } = require("../services/automationService");
