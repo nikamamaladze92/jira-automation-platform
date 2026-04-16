@@ -46,7 +46,6 @@ function formatConditionValue(field, value) {
   if (field === "priority") {
     return value.charAt(0).toUpperCase() + value.slice(1);
   }
-
   if (field === "department") {
     switch (value) {
       case "warehouse":
@@ -195,7 +194,6 @@ export default function RulesPage() {
   return (
     <div>
       <h1 style={{ marginBottom: "8px" }}>Automation Rules</h1>
-
       <div
         style={{
           display: "grid",
@@ -214,7 +212,6 @@ export default function RulesPage() {
             }}
           >
             <h2 style={{ marginTop: 0 }}>Create Rule</h2>
-
             <form
               onSubmit={handleCreateRule}
               style={{ display: "flex", flexDirection: "column", gap: "12px" }}
@@ -231,7 +228,6 @@ export default function RulesPage() {
                   required
                 />
               </label>
-
               <label>
                 <div style={{ marginBottom: "6px", fontWeight: 600 }}>
                   Priority
@@ -245,12 +241,11 @@ export default function RulesPage() {
                   <option value="">Select priority</option>
                   {priorityOptions.map((priority) => (
                     <option key={priority} value={priority}>
-                      {priority}
+                      {priority.charAt(0).toUpperCase() + priority.slice(1)}
                     </option>
                   ))}
                 </select>
               </label>
-
               <label>
                 <div style={{ marginBottom: "6px", fontWeight: 600 }}>
                   Department
@@ -264,12 +259,11 @@ export default function RulesPage() {
                   <option value="">Select department</option>
                   {departmentOptions.map((department) => (
                     <option key={department} value={department}>
-                      {department}
+                      {formatConditionValue("department", department)}
                     </option>
                   ))}
                 </select>
               </label>
-
               <label>
                 <div style={{ marginBottom: "6px", fontWeight: 600 }}>
                   Comment
@@ -288,13 +282,11 @@ export default function RulesPage() {
                 {submitting ? "Creating..." : "Create Rule"}
               </button>
             </form>
-
             {error && (
               <p style={{ color: "red", marginTop: "12px" }}>{error}</p>
             )}
           </div>
         )}
-
         <div
           style={{
             background: "#fff",
@@ -354,7 +346,6 @@ export default function RulesPage() {
                       <p style={{ margin: "6px 0" }}>No conditions</p>
                     )}
                   </div>
-
                   <div style={{ marginTop: "10px" }}>
                     <strong>Actions:</strong>
                     {rule.actions?.length ? (
@@ -370,7 +361,6 @@ export default function RulesPage() {
                       <p style={{ margin: "6px 0" }}>No actions</p>
                     )}
                   </div>
-
                   {canManageRules && (
                     <div
                       style={{
