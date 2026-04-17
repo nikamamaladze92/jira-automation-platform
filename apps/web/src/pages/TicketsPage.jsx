@@ -1,6 +1,51 @@
 import { useState } from "react";
 import client from "../api/client";
 
+const priorityOptions = ["High", "Medium", "Low"];
+
+function formatDepartment(value) {
+  switch (value) {
+    case "warehouse":
+      return "Warehouse";
+    case "mechanic":
+      return "Mechanic";
+    case "body_shop":
+      return "Body Shop";
+    case "painting":
+      return "Painting";
+    case "inspection":
+      return "Inspection";
+    case "customer_service":
+      return "Customer Service";
+    default:
+      return value;
+  }
+}
+
+function formatJobType(type) {
+  switch (type) {
+    case "ADD COMMENT":
+      return "Add Jira comment";
+    default:
+      return type;
+  }
+}
+
+function formatJobStatus(status) {
+  switch (status) {
+    case "queued":
+      return "Queued";
+    case "processing":
+      return "Processing";
+    case "succeeded":
+      return "Succeeded";
+    case "failed":
+      return "Failed";
+    default:
+      return status;
+  }
+}
+
 const departmentOptions = [
   "warehouse",
   "mechanic",
@@ -13,8 +58,8 @@ const departmentOptions = [
 const initialForm = {
   summary: "",
   description: "",
-  priority: "High",
-  department: "warehouse",
+  priority: "",
+  department: "",
 };
 
 export default function TicketsPage() {
@@ -24,7 +69,7 @@ export default function TicketsPage() {
   const [automationData, setAutomationData] = useState(null);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [rawResponse, setRawResponse] = useState(null);
+  //const [rawResponse, setRawResponse] = useState(null);
 
   const handleChange = (e) => {
     setForm((prev) => ({
@@ -39,26 +84,24 @@ export default function TicketsPage() {
     setCreatedTicket(null);
     setTicketMetadata(null);
     setAutomationData(null);
-    setRawResponse(null);
+    //setRawResponse(null);
 
     try {
       setSubmitting(true);
-
       const res = await client.post("/tickets", {
         summary: form.summary.trim(),
         description: form.description.trim(),
         priority: form.priority,
         department: form.department,
       });
-
-      setRawResponse(res.data);
+      //setRawResponse(res.data);
       setCreatedTicket(res.data.data.ticket);
       setTicketMetadata(res.data.data.metadata || null);
       setAutomationData(res.data.data.automation || null);
       setForm(initialForm);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to create ticket");
-      setRawResponse(err.response?.data || null);
+      //setRawResponse(err.response?.data || null);
     } finally {
       setSubmitting(false);
     }
@@ -70,11 +113,6 @@ export default function TicketsPage() {
   return (
     <div>
       <h1 style={{ marginBottom: "8px" }}>Create Ticket</h1>
-      <p style={{ marginTop: 0, color: "#666", marginBottom: "20px" }}>
-        Create a Jira service ticket from a clean internal form and immediately
-        evaluate automation rules.
-      </p>
-
       <div
         style={{
           display: "grid",
@@ -101,27 +139,22 @@ export default function TicketsPage() {
               </div>
               <input
                 name="summary"
-                placeholder="Brake inspection request"
                 value={form.summary}
                 onChange={handleChange}
                 required
               />
             </label>
-
             <label>
               <div style={{ marginBottom: "6px", fontWeight: 600 }}>
                 Description
               </div>
               <textarea
                 name="description"
-                placeholder="Customer reports brake noise during driving."
                 value={form.description}
                 onChange={handleChange}
-                rows={5}
                 required
               />
             </label>
-
             <label>
               <div style={{ marginBottom: "6px", fontWeight: 600 }}>
                 Priority
@@ -130,15 +163,16 @@ export default function TicketsPage() {
                 name="priority"
                 value={form.priority}
                 onChange={handleChange}
+                required
               >
-                <option value="Highest">Highest</option>
-                <option value="High">High</option>
-                <option value="Medium">Medium</option>
-                <option value="Low">Low</option>
-                <option value="Lowest">Lowest</option>
+                <option value="">Select priority</option>
+                {priorityOptions.map((priority) => (
+                  <option key={priority} value={priority}>
+                    {priority}
+                  </option>
+                ))}
               </select>
             </label>
-
             <label>
               <div style={{ marginBottom: "6px", fontWeight: 600 }}>
                 Department
@@ -147,20 +181,20 @@ export default function TicketsPage() {
                 name="department"
                 value={form.department}
                 onChange={handleChange}
+                required
               >
+                <option value="">Select department</option>
                 {departmentOptions.map((department) => (
                   <option key={department} value={department}>
-                    {department}
+                    {formatDepartment(department)}
                   </option>
                 ))}
               </select>
             </label>
-
             <button type="submit" disabled={submitting}>
               {submitting ? "Creating" : "Create Ticket"}
             </button>
           </form>
-
           {error && (
             <div
               style={{
@@ -177,7 +211,6 @@ export default function TicketsPage() {
             </div>
           )}
         </div>
-
         <div
           style={{
             background: "#fff",
@@ -186,12 +219,11 @@ export default function TicketsPage() {
             padding: "20px",
           }}
         >
-          <h2 style={{ marginTop: 0 }}>Creation Result</h2>
+          <h2 style={{ marginTop: 0 }}>Created Tickets</h2>
 
           {!createdTicket ? (
             <p style={{ color: "#666" }}>
-              After you create a ticket, this panel will show the Jira issue key
-              and the automation result.
+              After you create a ticket you will get result down below
             </p>
           ) : (
             <>
@@ -217,7 +249,8 @@ export default function TicketsPage() {
                       <strong>Priority:</strong> {ticketMetadata.priority}
                     </p>
                     <p style={{ margin: "6px 0" }}>
-                      <strong>Department:</strong> {ticketMetadata.department}
+                      <strong>Department:</strong>{" "}
+                      {formatDepartment(ticketMetadata.department)}
                     </p>
                   </>
                 )}
@@ -248,7 +281,7 @@ export default function TicketsPage() {
                   <strong>Matched Rule Names:</strong>
                   {matchedRulesCount === 0 ? (
                     <p style={{ margin: "6px 0 0 0", color: "#666" }}>
-                      No rules matched this ticket.
+                      No rules matched this ticket
                     </p>
                   ) : (
                     <ul style={{ marginTop: "6px", paddingLeft: "18px" }}>
@@ -263,13 +296,14 @@ export default function TicketsPage() {
                   <strong>Created Jobs:</strong>
                   {jobsCreatedCount === 0 ? (
                     <p style={{ margin: "6px 0 0 0", color: "#666" }}>
-                      No jobs were created.
+                      No jobs were created
                     </p>
                   ) : (
                     <ul style={{ marginTop: "6px", paddingLeft: "18px" }}>
                       {automationData.jobs.map((job) => (
                         <li key={job._id}>
-                          {job.type} — {job.status} — {job.issueKey}
+                          {formatJobType(job.type)} —{" "}
+                          {formatJobStatus(job.status)}
                         </li>
                       ))}
                     </ul>
@@ -278,8 +312,7 @@ export default function TicketsPage() {
               </div>
             </>
           )}
-
-          {rawResponse && (
+          {/* {rawResponse && (
             <div
               style={{
                 marginTop: "16px",
@@ -289,7 +322,7 @@ export default function TicketsPage() {
                 padding: "10px",
               }}
             >
-              <strong>Latest API Response:</strong>
+              <strong> FOR DEV DEBUG: API response</strong>
               <pre
                 style={{
                   marginTop: "8px",
@@ -301,7 +334,7 @@ export default function TicketsPage() {
                 {JSON.stringify(rawResponse, null, 2)}
               </pre>
             </div>
-          )}
+          )} */}
         </div>
       </div>
     </div>

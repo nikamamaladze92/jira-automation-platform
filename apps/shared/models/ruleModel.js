@@ -49,7 +49,7 @@ module.exports = function createRuleModel(mongoose) {
       trigger: {
         type: String,
         required: true,
-        enum: ["issue created"],
+        enum: ["issue_created"],
         index: true,
       },
       conditions: {
@@ -74,5 +74,9 @@ module.exports = function createRuleModel(mongoose) {
     { timestamps: true },
   );
 
-  return mongoose.models.Rule || mongoose.model("Rule", ruleSchema);
+  //PREVENT OLDER SCHEMA ERROR IN MEMORY
+  if (mongoose.models.Rule) {
+    delete mongoose.models.Rule;
+  }
+  return mongoose.model("Rule", ruleSchema);
 };

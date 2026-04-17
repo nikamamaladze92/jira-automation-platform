@@ -136,7 +136,7 @@ export default function RulesPage() {
 
       await client.post("/rules", {
         name: form.name.trim(),
-        trigger: "issue created",
+        trigger: "issue_created",
         conditions: [
           {
             field: "priority",

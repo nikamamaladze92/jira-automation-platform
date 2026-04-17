@@ -62,10 +62,10 @@ module.exports = function createJobModel(mongoose) {
         type: String,
         required: true,
         enum: [
-          "ADD_COMMENT",
-          "TRANSITION_ISSUE",
-          "ASSIGN_ISSUE",
-          "UPDATE_FIELD",
+          "ADD COMMENT",
+          "TRANSITION ISSUE",
+          "ASSIGN ISSUE",
+          "UPDATE FIELD",
         ],
       },
       lockedBy: String,
@@ -125,5 +125,9 @@ module.exports = function createJobModel(mongoose) {
     { timestamps: true },
   );
 
-  return mongoose.models.Job || mongoose.model("Job", jobSchema);
+  // PREVENT OLDER SCHEMA ERROR IN MEMORY
+  if (mongoose.models.Job) {
+    delete mongoose.models.Job;
+  }
+  return mongoose.model("Job", jobSchema);
 };
