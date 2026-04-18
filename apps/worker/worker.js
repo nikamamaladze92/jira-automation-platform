@@ -111,18 +111,6 @@ async function executeJob(job) {
       await jira.addComment(job.issueKey, job.payload.comment);
       return { action: "ADD_COMMENT" };
 
-    case "ASSIGN_ISSUE":
-      await jira.assignIssue(job.issueKey, job.payload.accountId);
-      return { action: "ASSIGN_ISSUE" };
-
-    case "TRANSITION_ISSUE":
-      await jira.transitionIssue(job.issueKey, job.payload.transitionId);
-      return { action: "TRANSITION_ISSUE" };
-
-    case "UPDATE_FIELD":
-      await jira.updateField(job.issueKey, job.payload.fields);
-      return { action: "UPDATE_FIELD" };
-
     default:
       throw new Error(`Unknown job type: ${job.type}`);
   }

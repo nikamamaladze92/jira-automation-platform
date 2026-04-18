@@ -24,7 +24,7 @@ function formatDepartment(value) {
 
 function formatJobType(type) {
   switch (type) {
-    case "ADD COMMENT":
+    case "ADD_COMMENT":
       return "Add Jira comment";
     default:
       return type;
@@ -141,6 +141,10 @@ export default function TicketsPage() {
   return (
     <div>
       <h1 style={{ marginBottom: "8px" }}>Create Ticket</h1>
+      <p style={{ marginTop: 0, color: "#666", marginBottom: "20px" }}>
+        Submit a Jira ticket and review the automation result for the most
+        recent request
+      </p>
       <div
         style={{
           display: "grid",
@@ -220,7 +224,7 @@ export default function TicketsPage() {
               </select>
             </label>
             <button type="submit" disabled={submitting}>
-              {submitting ? "Creating" : "Create Ticket"}
+              {submitting ? "Creating Ticket" : "Create Ticket"}
             </button>
           </form>
           {error && (
@@ -250,7 +254,8 @@ export default function TicketsPage() {
           <h2 style={{ marginTop: 0 }}>Created Ticket</h2>
           {!createdTicket ? (
             <p style={{ color: "#666" }}>
-              After you create a ticket you will get result down below
+              Your most recent ticket result will appear down here after
+              submission
             </p>
           ) : (
             <>
@@ -292,7 +297,7 @@ export default function TicketsPage() {
                   borderRadius: "10px",
                 }}
               >
-                <h3 style={{ marginTop: 0 }}>Automation summary</h3>
+                <h3 style={{ marginTop: 0 }}>Automation Summary</h3>
                 <p style={{ margin: "6px 0" }}>
                   <strong>Matched Rules:</strong> {matchedRulesCount}
                 </p>
@@ -316,10 +321,10 @@ export default function TicketsPage() {
                 </div>
 
                 <div style={{ marginTop: "10px" }}>
-                  <strong>Created Jobs:</strong>
+                  <strong>Triggered Actions:</strong>
                   {jobsCreatedCount === 0 ? (
                     <p style={{ margin: "6px 0 0 0", color: "#666" }}>
-                      No jobs were created
+                      No actions were triggered
                     </p>
                   ) : (
                     <ul style={{ marginTop: "6px", paddingLeft: "18px" }}>

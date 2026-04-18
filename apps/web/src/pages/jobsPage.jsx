@@ -2,7 +2,31 @@ import { useEffect, useState } from "react";
 import client from "../api/client";
 
 const statusOptions = ["", "queued", "processing", "succeeded", "failed"];
-const typeOptions = ["", "ADD_COMMENT", "ASSIGN_ISSUE"];
+const typeOptions = ["", "ADD_COMMENT"];
+
+function formatJobType(type) {
+  switch (type) {
+    case "ADD_COMMENT":
+      return "Add Jira comment";
+    default:
+      return type;
+  }
+}
+
+function formatJobStatus(status) {
+  switch (status) {
+    case "queued":
+      return "Queued";
+    case "processing":
+      return "Processing";
+    case "succeeded":
+      return "Succeeded";
+    case "failed":
+      return "Failed";
+    default:
+      return status;
+  }
+}
 
 export default function JobsPage() {
   const [jobs, setJobs] = useState([]);
@@ -85,11 +109,10 @@ export default function JobsPage() {
 
   return (
     <div>
-      <h1 style={{ marginBottom: "8px" }}>Jobs</h1>
+      <h1 style={{ marginBottom: "8px" }}>Automation Jobs</h1>
       <p style={{ marginTop: 0, color: "#666", marginBottom: "20px" }}>
-        Jobs represent asynchronous work generated from matched automation
-        rules. Use this page to inspect queue state, failures, and worker
-        activity.
+        Review queued and completed automation work generated after inbound
+        ticket events match active rules
       </p>
 
       <div
@@ -101,7 +124,7 @@ export default function JobsPage() {
           marginBottom: "20px",
         }}
       >
-        <h2 style={{ marginTop: 0 }}>Filters</h2>
+        <h2 style={{ marginTop: 0 }}>Filter Jobs</h2>
 
         <form
           onSubmit={handleApplyFilters}
@@ -132,7 +155,7 @@ export default function JobsPage() {
             <select name="type" value={filters.type} onChange={handleChange}>
               {typeOptions.map((type) => (
                 <option key={type || "all-types"} value={type}>
-                  {type || "All"}
+                  {type ? formatJobType(type) : "All"}
                 </option>
               ))}
             </select>
@@ -144,7 +167,7 @@ export default function JobsPage() {
             </div>
             <input
               name="issueKey"
-              placeholder="KAN-3"
+              //placeholder="KAN-3"
               value={filters.issueKey}
               onChange={handleChange}
             />
@@ -153,7 +176,7 @@ export default function JobsPage() {
           <div style={{ display: "flex", gap: "10px" }}>
             <button type="submit">Apply</button>
             <button type="button" onClick={handleResetFilters}>
-              Reset
+              Reset Filters
             </button>
           </div>
         </form>
@@ -167,10 +190,10 @@ export default function JobsPage() {
           padding: "20px",
         }}
       >
-        <h2 style={{ marginTop: 0 }}>Job Queue</h2>
+        <h2 style={{ marginTop: 0 }}>Job Activity</h2>
 
         {jobs.length === 0 ? (
-          <p>No jobs found.</p>
+          <p>No automation jobs found</p>
         ) : (
           <div
             style={{ display: "flex", flexDirection: "column", gap: "12px" }}
@@ -189,13 +212,13 @@ export default function JobsPage() {
                 </p>
 
                 <p style={{ margin: "4px 0" }}>
-                  <strong>Type:</strong> {job.type}
+                  <strong>Action:</strong> {formatJobType(job.type)}
                 </p>
 
                 <p style={{ margin: "4px 0" }}>
                   <strong>Status:</strong>{" "}
                   <span style={{ color: getStatusColor(job.status) }}>
-                    {job.status}
+                    {formatJobStatus(job.status)}
                   </span>
                 </p>
 
@@ -204,7 +227,7 @@ export default function JobsPage() {
                 </p>
 
                 <p style={{ margin: "4px 0" }}>
-                  <strong>Locked By:</strong> {job.lockedBy || "-"}
+                  <strong>Worker lock:</strong> {job.lockedBy || "-"}
                 </p>
 
                 <p style={{ margin: "4px 0" }}>
@@ -224,7 +247,7 @@ export default function JobsPage() {
 
                 {job.payload?.comment && (
                   <p style={{ margin: "4px 0" }}>
-                    <strong>Comment Payload:</strong> {job.payload.comment}
+                    <strong>Comment:</strong> {job.payload.comment}
                   </p>
                 )}
 

@@ -1,7 +1,9 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import RoleRoute from "./components/RoleRoute";
 import Layout from "./components/Layout";
+
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import RulesPage from "./pages/RulesPage";
@@ -10,7 +12,6 @@ import ExecutionsPage from "./pages/ExecutionsPage";
 import EventsPage from "./pages/EventsPage";
 import UsersPage from "./pages/UsersPage";
 import DemoPage from "./pages/DemoPage";
-import RoleRoute from "./components/RoleRoute";
 import JobsPage from "./pages/jobsPage";
 
 export default function App() {
@@ -19,6 +20,7 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
+
           <Route
             path="/"
             element={
@@ -29,16 +31,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/rules"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <RulesPage />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
+
           <Route
             path="/tickets"
             element={
@@ -49,62 +42,70 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
-            path="/executions"
+            path="/rules"
             element={
-              <ProtectedRoute>
-                <ExecutionsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/events"
-            element={
-              <ProtectedRoute>
-                <EventsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/users"
-            element={
-              <ProtectedRoute>
-                <UsersPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/demo"
-            element={
-              <ProtectedRoute>
-                <DemoPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/demo"
-            element={
-              <RoleRoute roles={["admin", "manager"]}>
-                <DemoPage />
+              <RoleRoute roles={["manager", "admin"]}>
+                <Layout>
+                  <RulesPage />
+                </Layout>
               </RoleRoute>
             }
           />
+
+          <Route
+            path="/jobs"
+            element={
+              <RoleRoute roles={["admin"]}>
+                <Layout>
+                  <JobsPage />
+                </Layout>
+              </RoleRoute>
+            }
+          />
+
+          <Route
+            path="/executions"
+            element={
+              <RoleRoute roles={["admin"]}>
+                <Layout>
+                  <ExecutionsPage />
+                </Layout>
+              </RoleRoute>
+            }
+          />
+
+          <Route
+            path="/events"
+            element={
+              <RoleRoute roles={["admin"]}>
+                <Layout>
+                  <EventsPage />
+                </Layout>
+              </RoleRoute>
+            }
+          />
+
           <Route
             path="/users"
             element={
               <RoleRoute roles={["admin"]}>
-                <UsersPage />
+                <Layout>
+                  <UsersPage />
+                </Layout>
               </RoleRoute>
             }
           />
+
           <Route
-            path="/jobs"
+            path="/demo"
             element={
-              <ProtectedRoute>
+              <RoleRoute roles={["admin"]}>
                 <Layout>
-                  <JobsPage />
+                  <DemoPage />
                 </Layout>
-              </ProtectedRoute>
+              </RoleRoute>
             }
           />
         </Routes>

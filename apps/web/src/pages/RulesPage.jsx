@@ -4,13 +4,22 @@ import { useAuth } from "../context/AuthContext";
 
 const priorityOptions = ["high", "medium", "low"];
 
+// const departmentOptions = [
+//   "warehouse",
+//   "mechanic",
+//   "body shop",
+//   "painting",
+//   "inspection",
+//   "customer service",
+// ];
+
 const departmentOptions = [
   "warehouse",
   "mechanic",
-  "body shop",
+  "body_shop",
   "painting",
   "inspection",
-  "customer service",
+  "customer_service",
 ];
 
 const initialForm = {
@@ -52,30 +61,23 @@ function formatConditionValue(field, value) {
         return "Warehouse";
       case "mechanic":
         return "Mechanic";
-      case "body shop":
+      case "body_shop":
         return "Body Shop";
       case "painting":
         return "Painting";
       case "inspection":
         return "Inspection";
-      case "customer service":
+      case "customer_service":
         return "Customer Service";
       default:
         return value;
     }
   }
-  return value;
 }
 function getActionLabel(type) {
   switch (type) {
     case "ADD COMMENT":
       return "Add Jira comment";
-    case "TRANSITION ISSUE":
-      return "Transition issue";
-    case "ASSIGN ISSUE":
-      return "Assign issue";
-    case "UPDATE FIELD":
-      return "Update field";
     default:
       return type;
   }
@@ -83,10 +85,21 @@ function getActionLabel(type) {
 
 function getActionSummary(action) {
   switch (action.type) {
-    case "ADD COMMENT":
-      return `Comment: ${action.payload?.comment || "-"}`;
+    case "ADD_COMMENT":
+      return action.payload?.comment
+        ? `Comment text: ${action.payload.comment}`
+        : "Comment text not provided";
     default:
-      return "Unknown action";
+      return "Action details unavailable";
+  }
+}
+
+function formatTrigger(trigger) {
+  switch (trigger) {
+    case "issue_created":
+      return "Issue created";
+    default:
+      return trigger;
   }
 }
 
@@ -151,7 +164,7 @@ export default function RulesPage() {
         ],
         actions: [
           {
-            type: "ADD COMMENT",
+            type: "ADD_COMMENT",
             payload: {
               comment: form.comment.trim(),
             },
@@ -193,7 +206,12 @@ export default function RulesPage() {
 
   return (
     <div>
+      {/* <h1 style={{ marginBottom: "8px" }}>Automation Rules</h1> */}
       <h1 style={{ marginBottom: "8px" }}>Automation Rules</h1>
+      <p style={{ marginTop: 0, color: "#666", marginBottom: "20px" }}>
+        Configure rule based actions that run automatically after ticket events
+        enter the platform
+      </p>
       <div
         style={{
           display: "grid",
@@ -212,6 +230,10 @@ export default function RulesPage() {
             }}
           >
             <h2 style={{ marginTop: 0 }}>Create Rule</h2>
+            <p style={{ marginTop: 0, color: "#666", marginBottom: "16px" }}>
+              Define when automation should run and what action should be
+              triggered
+            </p>
             <form
               onSubmit={handleCreateRule}
               style={{ display: "flex", flexDirection: "column", gap: "12px" }}
@@ -266,7 +288,7 @@ export default function RulesPage() {
               </label>
               <label>
                 <div style={{ marginBottom: "6px", fontWeight: 600 }}>
-                  Comment
+                  Jira Comment
                 </div>
                 <textarea
                   name="comment"
@@ -279,7 +301,7 @@ export default function RulesPage() {
               </label>
 
               <button type="submit" disabled={submitting}>
-                {submitting ? "Creating..." : "Create Rule"}
+                {submitting ? "Creating Rule" : "Create Rule"}
               </button>
             </form>
             {error && (
@@ -295,7 +317,7 @@ export default function RulesPage() {
             padding: "20px",
           }}
         >
-          <h2 style={{ marginTop: 0 }}>Existing Rules</h2>
+          <h2 style={{ marginTop: 0 }}>Current Rules</h2>
 
           {loading ? (
             <p>Loading rules</p>
@@ -319,7 +341,7 @@ export default function RulesPage() {
                   </h3>
 
                   <p style={{ margin: "6px 0" }}>
-                    <strong>Trigger:</strong> {rule.trigger}
+                    <strong>Trigger:</strong> {formatTrigger(rule.trigger)}
                   </p>
 
                   <p style={{ margin: "6px 0" }}>
@@ -370,10 +392,10 @@ export default function RulesPage() {
                       }}
                     >
                       <button onClick={() => handleToggleRule(rule)}>
-                        {rule.enabled ? "Disable" : "Enable"}
+                        {rule.enabled ? "Disable Rule" : "Enable Rule"}
                       </button>
                       <button onClick={() => handleDeleteRule(rule._id)}>
-                        Delete
+                        Delete Rule
                       </button>
                     </div>
                   )}

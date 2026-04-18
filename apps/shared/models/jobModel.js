@@ -61,12 +61,7 @@ module.exports = function createJobModel(mongoose) {
       type: {
         type: String,
         required: true,
-        enum: [
-          "ADD COMMENT",
-          "TRANSITION ISSUE",
-          "ASSIGN ISSUE",
-          "UPDATE FIELD",
-        ],
+        enum: ["ADD_COMMENT"],
       },
       lockedBy: String,
       lockedAt: Date,

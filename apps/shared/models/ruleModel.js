@@ -24,12 +24,7 @@ module.exports = function createRuleModel(mongoose) {
       type: {
         type: String,
         required: true,
-        enum: [
-          "ADD COMMENT",
-          "TRANSITION ISSUE",
-          "ASSIGN ISSUE",
-          "UPDATE FIELD",
-        ],
+        enum: ["ADD_COMMENT"],
       },
       payload: {
         type: mongoose.Schema.Types.Mixed,

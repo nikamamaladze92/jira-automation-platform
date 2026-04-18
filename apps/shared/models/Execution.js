@@ -15,12 +15,7 @@ module.exports = function createExecutionModel(mongoose) {
       type: {
         type: String,
         required: true,
-        enum: [
-          "ADD_COMMENT",
-          "TRANSITION_ISSUE",
-          "ASSIGN_ISSUE",
-          "UPDATE_FIELD",
-        ],
+        enum: ["ADD_COMMENT"],
       },
       status: {
         type: String,

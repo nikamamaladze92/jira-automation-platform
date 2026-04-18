@@ -34,15 +34,44 @@ export default function Layout({ children }) {
           </p>
         </div>
 
-        <nav style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
-          <Link to="/">Overview</Link>
-          <Link to="/tickets">Create Ticket</Link>
-          <Link to="/rules">Automation Rules</Link>
-          <Link to="/jobs">Jobs</Link>
-          <Link to="/executions">Execution History</Link>
-          <Link to="/events">Event Stream</Link>
-          <Link to="/demo">Demo Trigger</Link>
-          {user?.role === "admin" && <Link to="/users">User Admin</Link>}
+        <nav style={{ marginBottom: "20px" }}>
+          <Link to="/" style={{ marginRight: "15px" }}>
+            Overview
+          </Link>
+
+          <Link to="/tickets" style={{ marginRight: "15px" }}>
+            Create Ticket
+          </Link>
+
+          {(user?.role === "manager" || user?.role === "admin") && (
+            <Link to="/rules" style={{ marginRight: "15px" }}>
+              Automation Rules
+            </Link>
+          )}
+
+          {user?.role === "admin" && (
+            <>
+              <Link to="/jobs" style={{ marginRight: "15px" }}>
+                Automation Jobs
+              </Link>
+
+              <Link to="/executions" style={{ marginRight: "15px" }}>
+                Execution History
+              </Link>
+
+              <Link to="/events" style={{ marginRight: "15px" }}>
+                Events
+              </Link>
+
+              <Link to="/demo" style={{ marginRight: "15px" }}>
+                Demo
+              </Link>
+
+              <Link to="/users" style={{ marginRight: "15px" }}>
+                User Admin
+              </Link>
+            </>
+          )}
         </nav>
 
         <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>

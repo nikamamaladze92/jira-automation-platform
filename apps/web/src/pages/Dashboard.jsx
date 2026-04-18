@@ -2,6 +2,52 @@ import { useEffect, useState } from "react";
 import client from "../api/client";
 import Summary from "../components/Summary";
 
+function formatExecutionType(type) {
+  switch (type) {
+    case "ADD_COMMENT":
+      return "Add Jira comment";
+    default:
+      return type;
+  }
+}
+
+function formatEventType(type) {
+  switch (type) {
+    case "issue_created":
+      return "Issue created";
+    default:
+      return type;
+  }
+}
+
+function formatDepartment(value) {
+  switch (value) {
+    case "warehouse":
+      return "Warehouse";
+    case "mechanic":
+      return "Mechanic";
+    case "body_shop":
+      return "Body Shop";
+    case "painting":
+      return "Painting";
+    case "inspection":
+      return "Inspection";
+    case "customer_service":
+      return "Customer Service";
+    default:
+      return value || "-";
+  }
+}
+
+function formatSource(source) {
+  switch (source) {
+    case "jira":
+      return "Jira";
+    default:
+      return source || "-";
+  }
+}
+
 export default function DashboardPage() {
   const [summary, setSummary] = useState(null);
   const [executions, setExecutions] = useState([]);
@@ -31,18 +77,16 @@ export default function DashboardPage() {
     loadDashboard();
   }, []);
 
-  if (loading) return <p>loading dashboard</p>;
+  if (loading) return <p>Loading dashboard...</p>;
   if (error) return <p style={{ color: "red" }}>{error}</p>;
 
   return (
-    // <div>
-    //   <h1 style={{ marginBottom: "20px" }}>Dashboard</h1>
     <div>
       <h1 style={{ marginBottom: "8px" }}>Operations Overview</h1>
       <p style={{ marginTop: 0, color: "#666", marginBottom: "20px" }}>
-        Monitor ticket automation, background jobs, worker executions, and
-        incoming events.
+        Monitor automation activity, worker outcomes, and inbound ticket events.
       </p>
+
       <div
         style={{
           display: "grid",
@@ -59,7 +103,6 @@ export default function DashboardPage() {
       </div>
 
       <div
-        className="two-col"
         style={{
           display: "grid",
           gridTemplateColumns: "1fr 1fr",
@@ -77,7 +120,7 @@ export default function DashboardPage() {
           <h2 style={{ marginTop: 0 }}>Recent Executions</h2>
 
           {executions.length === 0 ? (
-            <p>No executions found.</p>
+            <p>No recent executions found.</p>
           ) : (
             <div
               style={{ display: "flex", flexDirection: "column", gap: "12px" }}
@@ -92,7 +135,8 @@ export default function DashboardPage() {
                   }}
                 >
                   <p style={{ margin: "4px 0" }}>
-                    <strong>{execution.issueKey}</strong> — {execution.type}
+                    <strong>{execution.issueKey || "-"}</strong> —{" "}
+                    {formatExecutionType(execution.type)}
                   </p>
                   <p style={{ margin: "4px 0" }}>
                     Status:{" "}
@@ -123,10 +167,10 @@ export default function DashboardPage() {
             padding: "20px",
           }}
         >
-          <h2 style={{ marginTop: 0 }}>Recent Events</h2>
+          <h2 style={{ marginTop: 0 }}>Recent Inbound Events</h2>
 
           {events.length === 0 ? (
-            <p>No events found.</p>
+            <p>No recent events found.</p>
           ) : (
             <div
               style={{ display: "flex", flexDirection: "column", gap: "12px" }}
@@ -141,11 +185,12 @@ export default function DashboardPage() {
                   }}
                 >
                   <p style={{ margin: "4px 0" }}>
-                    <strong>{event.issueKey}</strong> — {event.eventType}
+                    <strong>{event.issueKey || "-"}</strong> —{" "}
+                    {formatEventType(event.eventType)}
                   </p>
                   <p style={{ margin: "4px 0" }}>
-                    Source: {event.source} | Department:{" "}
-                    {event.department || "-"}
+                    Source: {formatSource(event.source)} | Department:{" "}
+                    {formatDepartment(event.department)}
                   </p>
                 </div>
               ))}
