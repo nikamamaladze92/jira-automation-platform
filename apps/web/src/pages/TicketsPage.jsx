@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import client from "../api/client";
 
 const priorityOptions = ["High", "Medium", "Low"];
@@ -71,6 +71,22 @@ export default function TicketsPage() {
   const [submitting, setSubmitting] = useState(false);
   //const [rawResponse, setRawResponse] = useState(null);
 
+  const ticketResult = "ticketResult";
+
+  useEffect(() => {
+    const saved = localStorage.getItem(ticketResult);
+    if (!saved) return;
+    try {
+      const parsed = JSON.parse(saved);
+      setCreatedTicket(parsed.createdTicket || null);
+      setTicketMetadata(parsed.ticketMetadata || null);
+      setAutomationData(parsed.automationData || null);
+    } catch (err) {
+      console.error("Failed to parse saved ticket result", err);
+      localStorage.removeItem(ticketResult);
+    }
+  }, []);
+
   const handleChange = (e) => {
     setForm((prev) => ({
       ...prev,
@@ -86,6 +102,8 @@ export default function TicketsPage() {
     setAutomationData(null);
     //setRawResponse(null);
 
+    localStorage.removeItem(ticketResult);
+
     try {
       setSubmitting(true);
       const res = await client.post("/tickets", {
@@ -95,10 +113,20 @@ export default function TicketsPage() {
         department: form.department,
       });
       //setRawResponse(res.data);
+
       setCreatedTicket(res.data.data.ticket);
       setTicketMetadata(res.data.data.metadata || null);
       setAutomationData(res.data.data.automation || null);
       setForm(initialForm);
+
+      localStorage.setItem(
+        ticketResult,
+        JSON.stringify({
+          createdTicket: res.data.data.ticket,
+          ticketMetadata: res.data.data.metadata || null,
+          automationData: res.data.data.automation || null,
+        }),
+      );
     } catch (err) {
       setError(err.response?.data?.message || "Failed to create ticket");
       //setRawResponse(err.response?.data || null);
@@ -219,8 +247,7 @@ export default function TicketsPage() {
             padding: "20px",
           }}
         >
-          <h2 style={{ marginTop: 0 }}>Created Tickets</h2>
-
+          <h2 style={{ marginTop: 0 }}>Created Ticket</h2>
           {!createdTicket ? (
             <p style={{ color: "#666" }}>
               After you create a ticket you will get result down below
@@ -265,11 +292,7 @@ export default function TicketsPage() {
                   borderRadius: "10px",
                 }}
               >
-                <h3 style={{ marginTop: 0 }}>Automation Result</h3>
-                <p style={{ margin: "6px 0" }}>
-                  <strong>Duplicate Event:</strong>{" "}
-                  {automationData?.duplicate ? "Yes" : "No"}
-                </p>
+                <h3 style={{ marginTop: 0 }}>Automation summary</h3>
                 <p style={{ margin: "6px 0" }}>
                   <strong>Matched Rules:</strong> {matchedRulesCount}
                 </p>
@@ -278,7 +301,7 @@ export default function TicketsPage() {
                 </p>
 
                 <div style={{ marginTop: "10px" }}>
-                  <strong>Matched Rule Names:</strong>
+                  <strong>Matched Rules:</strong>
                   {matchedRulesCount === 0 ? (
                     <p style={{ margin: "6px 0 0 0", color: "#666" }}>
                       No rules matched this ticket
