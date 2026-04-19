@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const createJobModel = require("../../shared/models/jobModel");
-const createExecutionModel = require("../../shared/models/execution");
+const createExecutionModel = require("../../shared/models/Execution");
 const createRuleModel = require("../../shared/models/ruleModel");
 const createEventModel = require("../../shared/models/eventModel");
 

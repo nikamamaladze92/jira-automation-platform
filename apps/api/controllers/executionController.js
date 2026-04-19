@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const createExecutionModel = require("../../shared/models/execution");
+const createExecutionModel = require("../../shared/models/Execution");
 
 const Execution = createExecutionModel(mongoose);
 

@@ -3,6 +3,43 @@
 import { useEffect, useState } from "react";
 import client from "../api/client";
 
+function formatEventType(type) {
+  switch (type) {
+    case "issue_created":
+      return "Issue created";
+    default:
+      return type;
+  }
+}
+
+function formatSource(source) {
+  switch (source) {
+    case "jira":
+      return "Jira";
+    default:
+      return source || "-";
+  }
+}
+
+function formatDepartment(value) {
+  switch (value) {
+    case "warehouse":
+      return "Warehouse";
+    case "mechanic":
+      return "Mechanic";
+    case "body_shop":
+      return "Body Shop";
+    case "painting":
+      return "Painting";
+    case "inspection":
+      return "Inspection";
+    case "customer_service":
+      return "Customer Service";
+    default:
+      return value || "-";
+  }
+}
+
 export default function EventsPage() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -23,12 +60,16 @@ export default function EventsPage() {
     loadEvents();
   }, []);
 
-  if (loading) return <p>Loading events...</p>;
+  if (loading) return <p>Loading inbound events...</p>;
   if (error) return <p style={{ color: "red" }}>{error}</p>;
 
   return (
     <div>
-      <h1 style={{ marginBottom: "20px" }}>Events</h1>
+      <h1 style={{ marginBottom: "8px" }}>Inbound Events</h1>
+      <p style={{ marginTop: 0, color: "#666", marginBottom: "20px" }}>
+        Review ticket events received by the platform before automation rules
+        are evaluated.
+      </p>
 
       <div
         style={{
@@ -39,7 +80,7 @@ export default function EventsPage() {
         }}
       >
         {events.length === 0 ? (
-          <p>No events found.</p>
+          <p>No inbound events found.</p>
         ) : (
           <div
             style={{ display: "flex", flexDirection: "column", gap: "12px" }}
@@ -53,23 +94,36 @@ export default function EventsPage() {
                   padding: "14px",
                 }}
               >
-                <p>
-                  <strong>Issue:</strong> {event.issueKey}
+                <p style={{ margin: "4px 0" }}>
+                  <strong>Issue:</strong> {event.issueKey || "-"}
                 </p>
-                <p>
-                  <strong>Source:</strong> {event.source}
+
+                <p style={{ margin: "4px 0" }}>
+                  <strong>Source:</strong> {formatSource(event.source)}
                 </p>
-                <p>
-                  <strong>Event Type:</strong> {event.eventType}
+
+                <p style={{ margin: "4px 0" }}>
+                  <strong>Event:</strong> {formatEventType(event.eventType)}
                 </p>
-                <p>
+
+                <p style={{ margin: "4px 0" }}>
                   <strong>Priority:</strong> {event.priority || "-"}
                 </p>
-                <p>
-                  <strong>Department:</strong> {event.department || "-"}
+
+                <p style={{ margin: "4px 0" }}>
+                  <strong>Department:</strong>{" "}
+                  {formatDepartment(event.department)}
                 </p>
-                <p>
+
+                <p style={{ margin: "4px 0" }}>
                   <strong>Processed:</strong> {event.processed ? "Yes" : "No"}
+                </p>
+
+                <p style={{ margin: "4px 0" }}>
+                  <strong>Received:</strong>{" "}
+                  {event.createdAt
+                    ? new Date(event.createdAt).toLocaleString()
+                    : "-"}
                 </p>
               </div>
             ))}

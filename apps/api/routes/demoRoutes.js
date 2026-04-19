@@ -8,7 +8,7 @@ router.use(authMiddleware.protect);
 
 router.post(
   "/events",
-  authMiddleware.restrictTo("admin", "manager"),
+  authMiddleware.restrictTo("admin"),
   demoController.triggerDemoEvent,
 );
 

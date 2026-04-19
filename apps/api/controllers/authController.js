@@ -23,7 +23,7 @@ exports.signup = async (req, res, next) => {
       name: req.body.name,
       email: req.body.email,
       password: req.body.password,
-      role: req.body.role,
+      role: "staff",
     });
 
     signTokenResponse(newUser, 201, res);
@@ -100,6 +100,13 @@ exports.updateUserRole = async (req, res, next) => {
       });
     }
 
+    if (req.user.id === req.params.id && req.body.role !== "admin") {
+      return res.status(400).json({
+        status: "fail",
+        message: "Admins can't remove their own admin role",
+      });
+    }
+
     const user = await User.findByIdAndUpdate(
       req.params.id,
       { role: req.body.role },
@@ -134,6 +141,12 @@ exports.updateUserActive = async (req, res, next) => {
       return res.status(400).json({
         status: "fail",
         message: "Active must be true or false",
+      });
+    }
+    if (req.user.id === req.params.id && req.body.active === false) {
+      return res.status(400).json({
+        status: "fail",
+        message: "Admins can't deactivate their own account",
       });
     }
 

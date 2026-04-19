@@ -10,6 +10,34 @@ const initialForm = {
   department: "warehouse",
 };
 
+function formatDepartment(value) {
+  switch (value) {
+    case "warehouse":
+      return "Warehouse";
+    case "mechanic":
+      return "Mechanic";
+    case "body_shop":
+      return "Body Shop";
+    case "painting":
+      return "Painting";
+    case "inspection":
+      return "Inspection";
+    case "customer_service":
+      return "Customer Service";
+    default:
+      return value;
+  }
+}
+
+function formatJobType(type) {
+  switch (type) {
+    case "ADD_COMMENT":
+      return "Add Jira comment";
+    default:
+      return type;
+  }
+}
+
 export default function DemoPage() {
   const [form, setForm] = useState(initialForm);
   const [result, setResult] = useState(null);
@@ -30,25 +58,23 @@ export default function DemoPage() {
 
     try {
       setSubmitting(true);
-
       const res = await client.post("/demo/events", form);
       setResult(res.data.data);
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to trigger demo event");
+      setError(err.response?.data?.message || "Failed to trigger simulation");
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    // <div>
-    //   <h1 style={{ marginBottom: "20px" }}>Demo Event Trigger</h1>
     <div>
-      <h1 style={{ marginBottom: "8px" }}>Demo Trigger</h1>
+      <h1 style={{ marginBottom: "8px" }}>Simulation</h1>
       <p style={{ marginTop: 0, color: "#666", marginBottom: "20px" }}>
-        Use this page to simulate an incoming event and show the full automation
-        flow: rule match → job creation → worker execution.
+        Simulate an inbound ticket event to validate rule matching, job creation
+        and worker execution
       </p>
+
       <div
         style={{
           display: "grid",
@@ -65,39 +91,77 @@ export default function DemoPage() {
             padding: "20px",
           }}
         >
-          <h2>Trigger Event</h2>
+          <h2 style={{ marginTop: 0, marginBottom: "8px" }}>
+            Trigger Simulation
+          </h2>
+          <p style={{ marginTop: 0, color: "#666", marginBottom: "16px" }}>
+            Use controlled test values to run the automation pipeline without
+            creating a real user ticket from the main workflow
+          </p>
 
           <form
             onSubmit={handleTrigger}
             style={{ display: "flex", flexDirection: "column", gap: "12px" }}
           >
-            <input
-              name="eventType"
-              value={form.eventType}
-              onChange={handleChange}
-            />
-            <input
-              name="issueKey"
-              value={form.issueKey}
-              onChange={handleChange}
-            />
-            <select
-              name="priority"
-              value={form.priority}
-              onChange={handleChange}
-            >
-              <option value="high">high</option>
-              <option value="medium">medium</option>
-              <option value="low">low</option>
-            </select>
-            <input
-              name="department"
-              value={form.department}
-              onChange={handleChange}
-            />
+            <div>
+              <div style={{ marginBottom: "6px", fontWeight: 600 }}>
+                Event Type
+              </div>
+              <select
+                name="eventType"
+                value={form.eventType}
+                onChange={handleChange}
+              >
+                <option value="issue_created">Issue created</option>
+              </select>
+            </div>
+
+            <div>
+              <div style={{ marginBottom: "6px", fontWeight: 600 }}>
+                Issue Key
+              </div>
+              <input
+                name="issueKey"
+                value={form.issueKey}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div>
+              <div style={{ marginBottom: "6px", fontWeight: 600 }}>
+                Priority
+              </div>
+              <select
+                name="priority"
+                value={form.priority}
+                onChange={handleChange}
+              >
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+              </select>
+            </div>
+
+            <div>
+              <div style={{ marginBottom: "6px", fontWeight: 600 }}>
+                Department
+              </div>
+              <select
+                name="department"
+                value={form.department}
+                onChange={handleChange}
+              >
+                <option value="warehouse">Warehouse</option>
+                <option value="mechanic">Mechanic</option>
+                <option value="body_shop">Body Shop</option>
+                <option value="painting">Painting</option>
+                <option value="inspection">Inspection</option>
+                <option value="customer_service">Customer Service</option>
+              </select>
+            </div>
 
             <button type="submit" disabled={submitting}>
-              {submitting ? "Triggering..." : "Trigger Demo Event"}
+              {submitting ? "Running Simulation..." : "Run Simulation"}
             </button>
           </form>
 
@@ -112,25 +176,50 @@ export default function DemoPage() {
             padding: "20px",
           }}
         >
-          <h2>Result</h2>
+          <h2 style={{ marginTop: 0 }}>Simulation Result</h2>
 
           {!result ? (
-            <p>No event triggered yet.</p>
+            <p>No simulation has been run yet.</p>
           ) : (
             <div>
-              <p>
-                <strong>Event ID:</strong> {result.event?._id}
+              <p style={{ margin: "6px 0" }}>
+                <strong>Issue Key:</strong> {result.event?.issueKey || "-"}
               </p>
-              <p>
-                <strong>Issue Key:</strong> {result.event?.issueKey}
+              <p style={{ margin: "6px 0" }}>
+                <strong>Department:</strong>{" "}
+                {formatDepartment(result.event?.department)}
               </p>
-              <p>
+              <p style={{ margin: "6px 0" }}>
                 <strong>Matched Rules:</strong>{" "}
                 {result.matchedRules?.length || 0}
               </p>
-              <p>
-                <strong>Jobs Created:</strong> {result.jobs?.length || 0}
+              <p style={{ margin: "6px 0" }}>
+                <strong>Triggered Actions:</strong> {result.jobs?.length || 0}
               </p>
+
+              {result.matchedRules?.length > 0 && (
+                <div style={{ marginTop: "12px" }}>
+                  <strong>Matched Rule Names:</strong>
+                  <ul style={{ marginTop: "8px" }}>
+                    {result.matchedRules.map((rule) => (
+                      <li key={rule._id}>{rule.name}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {result.jobs?.length > 0 && (
+                <div style={{ marginTop: "12px" }}>
+                  <strong>Triggered Action Types:</strong>
+                  <ul style={{ marginTop: "8px" }}>
+                    {result.jobs.map((job) => (
+                      <li key={job._id || `${job.type}-${job.issueKey}`}>
+                        {formatJobType(job.type)}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
         </div>

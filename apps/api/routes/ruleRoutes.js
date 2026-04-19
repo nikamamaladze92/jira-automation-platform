@@ -8,9 +8,10 @@ const router = express.Router();
 
 router.use(authMiddleware.protect);
 
+router;
 router
   .route("/")
-  .get(ruleController.getRules)
+  .get(authMiddleware.restrictTo("admin", "manager"), ruleController.getRules)
   .post(
     authMiddleware.restrictTo("admin", "manager"),
     body("name").notEmpty().withMessage("Rule name is required"),
@@ -22,9 +23,10 @@ router
     validate,
     ruleController.createRule,
   );
+router;
 router
   .route("/:id")
-  .get(ruleController.getRule)
+  .get(authMiddleware.restrictTo("admin", "manager"), ruleController.getRule)
   .patch(
     authMiddleware.restrictTo("admin", "manager"),
     ruleController.updateRule,

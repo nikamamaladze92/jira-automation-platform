@@ -6,6 +6,10 @@ const router = express.Router();
 
 router.use(authMiddleware.protect);
 
-router.get("/summary", dashboardController.getSummary);
+router.get(
+  "/summary",
+  authMiddleware.restrictTo("admin", "manager"),
+  dashboardController.getSummary,
+);
 
 module.exports = router;

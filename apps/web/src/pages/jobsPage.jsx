@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import client from "../api/client";
 
 const statusOptions = ["", "queued", "processing", "succeeded", "failed"];
@@ -28,27 +28,33 @@ function formatJobStatus(status) {
   }
 }
 
+const filters = {
+  status: "",
+  type: "",
+  issueKey: "",
+};
+
 export default function JobsPage() {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const [filters, setFilters] = useState({
-    status: "",
-    type: "",
-    issueKey: "",
-  });
+  // doesn't trigger fetch
+  const [draftFilters, setDraftFilters] = useState(filters);
 
-  const loadJobs = async () => {
+  // triggers the fetch
+  const [appliedFilters, setAppliedFilters] = useState(filters);
+
+  const loadJobs = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
 
       const params = {};
-
-      if (filters.status) params.status = filters.status;
-      if (filters.type) params.type = filters.type;
-      if (filters.issueKey.trim()) params.issueKey = filters.issueKey.trim();
+      if (appliedFilters.status) params.status = appliedFilters.status;
+      if (appliedFilters.type) params.type = appliedFilters.type;
+      if (appliedFilters.issueKey.trim())
+        params.issueKey = appliedFilters.issueKey.trim();
 
       const res = await client.get("/jobs", { params });
       setJobs(res.data.data.jobs || []);
@@ -57,36 +63,25 @@ export default function JobsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [appliedFilters]);
 
   useEffect(() => {
     loadJobs();
-  }, []);
+  }, [loadJobs]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
-    setFilters((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setDraftFilters((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleApplyFilters = (e) => {
     e.preventDefault();
-    loadJobs();
+    setAppliedFilters(draftFilters);
   };
 
   const handleResetFilters = () => {
-    setFilters({
-      status: "",
-      type: "",
-      issueKey: "",
-    });
-
-    setTimeout(() => {
-      loadJobs();
-    }, 0);
+    setDraftFilters(filters);
+    setAppliedFilters(filters);
   };
 
   const getStatusColor = (status) => {
@@ -104,7 +99,7 @@ export default function JobsPage() {
     }
   };
 
-  if (loading) return <p>Loading jobs...</p>;
+  if (loading) return <p>Loading jobs</p>;
   if (error) return <p style={{ color: "red" }}>{error}</p>;
 
   return (

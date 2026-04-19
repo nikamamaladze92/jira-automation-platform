@@ -1,5 +1,15 @@
 require("dotenv").config();
 //const mongoose = require("mongoose");
+
+const requiredEnvVars = ["JWT_SECRET", "JIRA_PROJECT_KEY"];
+
+for (const key of requiredEnvVars) {
+  if (!process.env[key]) {
+    console.error(`Missing required environment variable: ${key}`);
+    process.exit(1);
+  }
+}
+
 const connectDB = require("../shared/db/mongoose");
 
 connectDB();

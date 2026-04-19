@@ -8,7 +8,7 @@ router.use(authMiddleware.protect);
 
 router
   .route("/")
-  .get(jobController.getJobs)
-  .post(authMiddleware.restrictTo("admin", "manager"), jobController.createJob);
+  .get(authMiddleware.restrictTo("admin"), jobController.getJobs)
+  .post(authMiddleware.restrictTo("admin"), jobController.createJob);
 
 module.exports = router;
