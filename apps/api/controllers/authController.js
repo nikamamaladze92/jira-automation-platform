@@ -176,3 +176,52 @@ exports.updateUserActive = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.updateUserDepartment = async (req, res, next) => {
+  try {
+    const allowedDepartments = [
+      "warehouse",
+      "mechanic",
+      "body_shop",
+      "painting",
+      "inspection",
+      "customer_service",
+      null,
+      "",
+    ];
+
+    if (!allowedDepartments.includes(req.body.department)) {
+      return res.status(400).json({
+        status: "fail",
+        message: "Invalid department value",
+      });
+    }
+
+    const updateValue = req.body.department || null;
+
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { department: updateValue },
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        status: "fail",
+        message: "User not found",
+      });
+    }
+
+    res.status(200).json({
+      status: "success",
+      data: {
+        user,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};

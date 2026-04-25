@@ -22,6 +22,18 @@ module.exports = function createUserModel(mongoose) {
         enum: ["admin", "manager", "staff"],
         default: "staff",
       },
+      department: {
+        type: String,
+        enum: [
+          "warehouse",
+          "mechanic",
+          "body_shop",
+          "painting",
+          "inspection",
+          "customer_service",
+        ],
+        default: null,
+      },
       password: {
         type: String,
         required: [true, "User must have a password"],

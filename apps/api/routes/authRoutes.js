@@ -49,4 +49,11 @@ router.patch(
   authController.updateUserActive,
 );
 
+router.patch(
+  "/users/:id/department",
+  authMiddleware.protect,
+  authMiddleware.restrictTo("admin"),
+  authController.updateUserDepartment,
+);
+
 module.exports = router;

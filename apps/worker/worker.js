@@ -5,6 +5,9 @@ const mongoose = require("mongoose");
 const createJobModel = require("../shared/models/jobModel");
 const createExecutionModel = require("../shared/models/execution");
 const jira = require("./services/jiraService");
+const createUserModel = require("../shared/models/userModel");
+const emailService = require("./services/emailService");
+
 const WORKER_ID = `worker-${process.pid}`;
 
 function sleep(ms) {
@@ -26,6 +29,7 @@ async function startWorker() {
 
     const Job = createJobModel(mongoose);
     const Execution = createExecutionModel(mongoose);
+    const User = createUserModel(mongoose);
 
     while (true) {
       // const job = await Job.findOneAndUpdate(
@@ -71,7 +75,7 @@ async function startWorker() {
       });
 
       try {
-        const result = await executeJob(job);
+        const result = await executeJob(job, User);
 
         job.status = "succeeded";
         job.error = undefined;
@@ -105,12 +109,60 @@ async function startWorker() {
     process.exit(1);
   }
 }
-async function executeJob(job) {
+async function executeJob(job, User) {
   switch (job.type) {
     case "ADD_COMMENT":
       await jira.addComment(job.issueKey, job.payload.comment);
       return { action: "ADD_COMMENT" };
+    case "SEND_EMAIL": {
+      const department = job.payload?.department;
 
+      if (!department) {
+        throw new Error("SEND_EMAIL job is missing department");
+      }
+      const manager = await User.findOne({
+        role: "manager",
+        department,
+      });
+
+      if (!manager) {
+        throw new Error(`No manager found for department: ${department}`);
+      }
+      const subject =
+        job.payload?.subject ||
+        `New Jira ticket requires attention: ${job.issueKey}`;
+      const text =
+        job.payload?.text ||
+        [
+          `A new Jira ticket was created and matched an automation rule`,
+          ``,
+          `Issue Key: ${job.issueKey}`,
+          `Department: ${department}`,
+          ``,
+          `Please review the ticket in Jira`,
+        ].join("\n");
+
+      const html =
+        job.payload?.html ||
+        `
+          <p>A new Jira ticket was created and matched an automation rule</p>
+          <p><strong>Issue Key:</strong> ${job.issueKey}</p>
+          <p><strong>Department:</strong> ${department}</p>
+          <p>Please review the ticket in Jira</p>
+        `;
+      const emailResult = await emailService.sendEmail({
+        to: manager.email,
+        subject,
+        text,
+        html,
+      });
+      return {
+        action: "SEND_EMAIL",
+        recipient: manager.email,
+        department,
+        ...emailResult,
+      };
+    }
     default:
       throw new Error(`Unknown job type: ${job.type}`);
   }

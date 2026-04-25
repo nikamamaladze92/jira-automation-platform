@@ -2,12 +2,14 @@ import { useEffect, useState, useCallback } from "react";
 import client from "../api/client";
 
 const statusOptions = ["", "queued", "processing", "succeeded", "failed"];
-const typeOptions = ["", "ADD_COMMENT"];
+const typeOptions = ["", "ADD_COMMENT", "SEND_EMAIL"];
 
 function formatJobType(type) {
   switch (type) {
     case "ADD_COMMENT":
       return "Add Jira comment";
+    case "SEND_EMAIL":
+      return "Send manager email";
     default:
       return type;
   }

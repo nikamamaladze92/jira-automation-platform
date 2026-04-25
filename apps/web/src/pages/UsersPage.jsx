@@ -15,6 +15,25 @@ function formatRole(role) {
   }
 }
 
+function formatDepartment(value) {
+  switch (value) {
+    case "warehouse":
+      return "Warehouse";
+    case "mechanic":
+      return "Mechanic";
+    case "body_shop":
+      return "Body Shop";
+    case "painting":
+      return "Painting";
+    case "inspection":
+      return "Inspection";
+    case "customer_service":
+      return "Customer Service";
+    default:
+      return value || "Not assigned";
+  }
+}
+
 export default function UsersPage() {
   const { user } = useAuth();
 
@@ -43,6 +62,16 @@ export default function UsersPage() {
     }
   }, [user]);
 
+  const handleDepartmentChange = async (id, department) => {
+    try {
+      setError("");
+      await client.patch(`/auth/users/${id}/department`, { department });
+      await loadUsers();
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to update department");
+    }
+  };
+
   const handleRoleChange = async (id, role) => {
     try {
       setError("");
@@ -65,7 +94,7 @@ export default function UsersPage() {
     }
   };
 
-  if (loading) return <p>Loading users...</p>;
+  if (loading) return <p>Loading users</p>;
 
   if (user?.role !== "admin") {
     return <p style={{ color: "red" }}>Only admins can access this page.</p>;
@@ -114,6 +143,9 @@ export default function UsersPage() {
                   <strong>Role:</strong> {formatRole(u.role)}
                 </p>
                 <p style={{ margin: "4px 0" }}>
+                  <strong>Department:</strong> {formatDepartment(u.department)}
+                </p>
+                <p style={{ margin: "4px 0" }}>
                   <strong>Status:</strong> {u.active ? "Active" : "Inactive"}
                 </p>
 
@@ -144,6 +176,25 @@ export default function UsersPage() {
                       Activate Account
                     </button>
                   )}
+                </div>
+                <div style={{ marginTop: "12px" }}>
+                  <div style={{ marginBottom: "6px", fontWeight: 600 }}>
+                    Assigned Department
+                  </div>
+                  <select
+                    value={u.department || ""}
+                    onChange={(e) =>
+                      handleDepartmentChange(u._id, e.target.value)
+                    }
+                  >
+                    <option value="">Not assigned</option>
+                    <option value="warehouse">Warehouse</option>
+                    <option value="mechanic">Mechanic</option>
+                    <option value="body_shop">Body Shop</option>
+                    <option value="painting">Painting</option>
+                    <option value="inspection">Inspection</option>
+                    <option value="customer_service">Customer Service</option>
+                  </select>
                 </div>
               </div>
             ))}

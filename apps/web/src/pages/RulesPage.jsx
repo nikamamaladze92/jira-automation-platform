@@ -4,15 +4,6 @@ import { useAuth } from "../context/AuthContext";
 
 const priorityOptions = ["high", "medium", "low"];
 
-// const departmentOptions = [
-//   "warehouse",
-//   "mechanic",
-//   "body shop",
-//   "painting",
-//   "inspection",
-//   "customer service",
-// ];
-
 const departmentOptions = [
   "warehouse",
   "mechanic",
@@ -27,6 +18,7 @@ const initialForm = {
   priority: "",
   department: "",
   comment: "",
+  actionType: "ADD_COMMENT",
 };
 
 function formatConditionField(field) {
@@ -73,11 +65,14 @@ function formatConditionValue(field, value) {
         return value;
     }
   }
+  return value;
 }
 function getActionLabel(type) {
   switch (type) {
-    case "ADD COMMENT":
+    case "ADD_COMMENT":
       return "Add Jira comment";
+    case "SEND_EMAIL":
+      return "Send manager email";
     default:
       return type;
   }
@@ -89,6 +84,8 @@ function getActionSummary(action) {
       return action.payload?.comment
         ? `Comment text: ${action.payload.comment}`
         : "Comment text not provided";
+    case "SEND_EMAIL":
+      return "Send the email notification to the department manager";
     default:
       return "Action details unavailable";
   }
@@ -143,7 +140,29 @@ export default function RulesPage() {
   const handleCreateRule = async (e) => {
     e.preventDefault();
     setError("");
+    if (form.actionType === "ADD_COMMENT" && !form.comment.trim()) {
+      setError("Jira comment is required for comment actions");
+      return;
+    }
 
+    if (form.actionType === "SEND_EMAIL" && !form.department) {
+      setError("Department is required for manager email actions");
+      return;
+    }
+    const action =
+      form.actionType === "SEND_EMAIL"
+        ? {
+            type: "SEND_EMAIL",
+            payload: {
+              department: form.department,
+            },
+          }
+        : {
+            type: "ADD_COMMENT",
+            payload: {
+              comment: form.comment.trim(),
+            },
+          };
     try {
       setSubmitting(true);
 
@@ -162,14 +181,7 @@ export default function RulesPage() {
             value: form.department,
           },
         ],
-        actions: [
-          {
-            type: "ADD_COMMENT",
-            payload: {
-              comment: form.comment.trim(),
-            },
-          },
-        ],
+        actions: [action],
         enabled: true,
       });
 
@@ -206,7 +218,6 @@ export default function RulesPage() {
 
   return (
     <div>
-      {/* <h1 style={{ marginBottom: "8px" }}>Automation Rules</h1> */}
       <h1 style={{ marginBottom: "8px" }}>Automation Rules</h1>
       <p style={{ marginTop: 0, color: "#666", marginBottom: "20px" }}>
         Configure rule based actions that run automatically after ticket events
@@ -286,20 +297,33 @@ export default function RulesPage() {
                   ))}
                 </select>
               </label>
-              <label>
+              <div>
                 <div style={{ marginBottom: "6px", fontWeight: 600 }}>
-                  Jira Comment
+                  Action Type
                 </div>
-                <textarea
-                  name="comment"
-                  // placeholder=""
-                  value={form.comment}
+                <select
+                  name="actionType"
+                  value={form.actionType}
                   onChange={handleChange}
-                  rows={4}
-                  required
-                />
-              </label>
-
+                >
+                  <option value="ADD_COMMENT">Add Jira comment</option>
+                  <option value="SEND_EMAIL">Send manager email</option>
+                </select>
+              </div>
+              {form.actionType === "ADD_COMMENT" && (
+                <label>
+                  <div style={{ marginBottom: "6px", fontWeight: 600 }}>
+                    Jira Comment
+                  </div>
+                  <textarea
+                    name="comment"
+                    value={form.comment}
+                    onChange={handleChange}
+                    rows={4}
+                    placeholder="Add a comment that will be posted to the Jira issue"
+                  />
+                </label>
+              )}
               <button type="submit" disabled={submitting}>
                 {submitting ? "Creating Rule" : "Create Rule"}
               </button>
