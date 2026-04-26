@@ -13,6 +13,17 @@ function normalizeValue(value) {
   return String(value).trim().toLowerCase();
 }
 
+function normalizeActionType(type) {
+  switch (type) {
+    case "ADD COMMENT":
+      return "ADD_COMMENT";
+    case "SEND EMAIL":
+      return "SEND_EMAIL";
+    default:
+      return type;
+  }
+}
+
 function matchesCondition(event, condition) {
   const actualValue = event[condition.field];
   const normalizedActual = normalizeValue(actualValue);
@@ -82,17 +93,18 @@ async function createJobsFromMatchedRules(savedEvent, matchedRules) {
       actionIndex++
     ) {
       const action = rule.actions[actionIndex];
+      const normalizedActionType = normalizeActionType(action.type);
       const dedupeKey = buildJobDedupeKey({
         eventId: savedEvent._id,
         ruleId: rule._id,
         actionIndex,
-        type: action.type,
+        type: normalizedActionType,
         issueKey: savedEvent.issueKey,
       });
 
       try {
         const job = await Job.create({
-          type: action.type,
+          type: normalizedActionType,
           issueKey: savedEvent.issueKey,
           payload: action.payload,
           status: "queued",
