@@ -154,7 +154,7 @@ exports.updateUserActive = async (req, res, next) => {
       req.params.id,
       { active: req.body.active },
       {
-        new: true,
+        returnDocument: "after",
         runValidators: true,
       },
     ).select("+active");
@@ -165,6 +165,12 @@ exports.updateUserActive = async (req, res, next) => {
         message: "No user found with that ID",
       });
     }
+
+    console.log("UPDATED USER ACTIVE:", {
+      id: user._id,
+      email: user.email,
+      active: user.active,
+    });
 
     res.status(200).json({
       status: "success",

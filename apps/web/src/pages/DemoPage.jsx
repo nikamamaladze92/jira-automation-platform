@@ -33,6 +33,8 @@ function formatJobType(type) {
   switch (type) {
     case "ADD_COMMENT":
       return "Add Jira comment";
+    case "SEND_EMAIL":
+      return "Send manager email";
     default:
       return type;
   }

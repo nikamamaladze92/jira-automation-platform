@@ -34,6 +34,11 @@ module.exports = function createUserModel(mongoose) {
         ],
         default: null,
       },
+      active: {
+        type: Boolean,
+        default: true,
+        select: false,
+      },
       password: {
         type: String,
         required: [true, "User must have a password"],

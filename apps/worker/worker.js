@@ -1,4 +1,6 @@
 require("dotenv").config();
+
+console.log("SMTP_HOST loaded by worker:", process.env.SMTP_HOST);
 const connectDB = require("../shared/db/mongoose");
 
 const mongoose = require("mongoose");
