@@ -1,6 +1,5 @@
 require("dotenv").config();
 
-console.log("SMTP_HOST loaded by worker:", process.env.SMTP_HOST);
 const connectDB = require("../shared/db/mongoose");
 
 const mongoose = require("mongoose");
@@ -11,6 +10,25 @@ const createUserModel = require("../shared/models/userModel");
 const emailService = require("./services/emailService");
 
 const WORKER_ID = `worker-${process.pid}`;
+
+function formatDepartment(value) {
+  switch (value) {
+    case "warehouse":
+      return "Warehouse";
+    case "mechanic":
+      return "Mechanic";
+    case "body_shop":
+      return "Body Shop";
+    case "painting":
+      return "Painting";
+    case "inspection":
+      return "Inspection";
+    case "customer_service":
+      return "Customer Service";
+    default:
+      return value || "Unknown";
+  }
+}
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -111,6 +129,7 @@ async function startWorker() {
     process.exit(1);
   }
 }
+
 async function executeJob(job, User) {
   switch (job.type) {
     case "ADD_COMMENT":
@@ -119,14 +138,16 @@ async function executeJob(job, User) {
     case "SEND_EMAIL": {
       const department = job.payload?.department;
 
+      const formattedDepartment = formatDepartment(department);
+
       if (!department) {
         throw new Error("SEND_EMAIL job is missing department");
       }
       const manager = await User.findOne({
         role: "manager",
         department,
+        active: true,
       });
-
       if (!manager) {
         throw new Error(`No manager found for department: ${department}`);
       }
@@ -136,22 +157,22 @@ async function executeJob(job, User) {
       const text =
         job.payload?.text ||
         [
-          `A new Jira ticket was created and matched an automation rule`,
+          `A high-priority Jira ticket was created for ${formattedDepartment}.`,
           ``,
           `Issue Key: ${job.issueKey}`,
-          `Department: ${department}`,
+          `Department: ${formattedDepartment}`,
           ``,
-          `Please review the ticket in Jira`,
+          `Please review this ticket in Jira.`,
         ].join("\n");
 
       const html =
         job.payload?.html ||
         `
-          <p>A new Jira ticket was created and matched an automation rule</p>
-          <p><strong>Issue Key:</strong> ${job.issueKey}</p>
-          <p><strong>Department:</strong> ${department}</p>
-          <p>Please review the ticket in Jira</p>
-        `;
+    <p>A high-priority Jira ticket was created for <strong>${formattedDepartment}</strong>.</p>
+    <p><strong>Issue Key:</strong> ${job.issueKey}</p>
+    <p><strong>Department:</strong> ${formattedDepartment}</p>
+    <p>Please review this ticket in Jira.</p>
+  `;
       const emailResult = await emailService.sendEmail({
         to: manager.email,
         subject,
