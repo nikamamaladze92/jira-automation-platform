@@ -471,7 +471,7 @@
 //
 //
 
-// DELETE LATER
+// DELETE the comment later!
 
 import { useEffect, useState, useMemo } from "react";
 import client from "../api/client";
