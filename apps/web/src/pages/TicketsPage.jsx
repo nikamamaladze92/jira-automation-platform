@@ -3,24 +3,6 @@ import client from "../api/client";
 
 const priorityOptions = ["High", "Medium", "Low"];
 
-//delete later
-//delete later
-//delete later
-//delete later
-//delete later
-//delete later
-//delete later
-//delete later
-//delete later
-//delete later
-//delete later
-//delete later
-//delete later
-//delete later
-//delete later
-//delete later
-//delete later
-
 function formatDepartment(value) {
   switch (value) {
     case "warehouse":
