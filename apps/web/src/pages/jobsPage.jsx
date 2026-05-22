@@ -4,6 +4,20 @@ import client from "../api/client";
 const statusOptions = ["", "queued", "processing", "succeeded", "failed"];
 const typeOptions = ["", "ADD_COMMENT", "SEND_EMAIL"];
 
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
+
 function formatJobType(type) {
   switch (type) {
     case "ADD_COMMENT":
