@@ -2,6 +2,30 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
+
 export default function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
