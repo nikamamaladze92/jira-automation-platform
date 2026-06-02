@@ -14,6 +14,17 @@ function formatJobType(type) {
       return type;
   }
 }
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
 
 function formatJobStatus(status) {
   switch (status) {
