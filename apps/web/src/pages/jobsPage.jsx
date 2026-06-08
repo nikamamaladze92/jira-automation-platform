@@ -27,13 +27,6 @@ function formatJobType(type) {
 //delete later
 //delete later
 //delete later
-//delete later
-//delete later
-//delete later
-//delete later
-//delete later
-//delete later
-//delete later
 
 function formatJobStatus(status) {
   switch (status) {

@@ -24,14 +24,6 @@ function formatExecutionType(type) {
 //delete later
 //delete later
 
-//delete later
-//delete later
-//delete later
-//delete later
-//delete later
-//delete later
-//delete later
-
 function formatEventType(type) {
   switch (type) {
     case "issue_created":
