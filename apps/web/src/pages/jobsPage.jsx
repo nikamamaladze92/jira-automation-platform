@@ -14,19 +14,6 @@ function formatJobType(type) {
       return type;
   }
 }
-//delete later
-//delete later
-//delete later
-//delete later
-//delete later
-//delete later
-//delete later
-//delete later
-//delete later
-//delete later
-//delete later
-//delete later
-//delete later
 
 function formatJobStatus(status) {
   switch (status) {
@@ -42,6 +29,20 @@ function formatJobStatus(status) {
       return status;
   }
 }
+
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
 
 const filters = {
   status: "",
