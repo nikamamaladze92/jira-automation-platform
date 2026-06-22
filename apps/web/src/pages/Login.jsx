@@ -11,13 +11,6 @@ export default function Login() {
     password: "",
   });
 
-  //delete later
-  //delete later
-  //delete later
-
-  //delete later
-  //delete later
-
   const [error, setError] = useState("");
 
   const handleChange = (e) => {

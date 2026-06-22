@@ -10,6 +10,19 @@ const initialForm = {
   department: "warehouse",
 };
 
+//delete later
+
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
+
+//delete later
+//delete later
+//delete later
+//delete later
+
 function formatDepartment(value) {
   switch (value) {
     case "warehouse":
