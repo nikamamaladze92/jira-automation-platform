@@ -12,15 +12,7 @@ function formatEventType(type) {
   }
 }
 
-//delete later
-//delete later
-//delete later
 
-//delete later
-//delete later
-//delete later
-//delete later
-//delete later
 
 function formatSource(source) {
   switch (source) {

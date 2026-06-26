@@ -2,6 +2,19 @@ import { useEffect, useState } from "react";
 import client from "../api/client";
 import { useAuth } from "../context/AuthContext";
 
+//delete later
+
+//delete later
+//delete later
+//delete later
+
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
+//delete later
+
 function formatRole(role) {
   switch (role) {
     case "staff":
