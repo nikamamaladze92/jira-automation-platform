@@ -2,6 +2,16 @@
 
 import { useState } from "react";
 import client from "../api/client";
+import { formatDepartment, formatJobType } from "../styles/tokens";
+
+const departmentOptions = [
+  "warehouse",
+  "mechanic",
+  "body_shop",
+  "painting",
+  "inspection",
+  "customer_service",
+];
 
 const initialForm = {
   eventType: "issue_created",
@@ -10,35 +20,146 @@ const initialForm = {
   department: "warehouse",
 };
 
-function formatDepartment(value) {
-  switch (value) {
-    case "warehouse":
-      return "Warehouse";
-    case "mechanic":
-      return "Mechanic";
-    case "body_shop":
-      return "Body Shop";
-    case "painting":
-      return "Painting";
-    case "inspection":
-      return "Inspection";
-    case "customer_service":
-      return "Customer Service";
-    default:
-      return value;
-  }
+// subcomponents
+
+function SimulationResult({ result }) {
+  const matchedRules = result.matchedRules || [];
+  const jobs = result.jobs || [];
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+      {/* Summary counts */}
+      <div style={{ display: "flex", gap: "12px" }}>
+        <div
+          style={{
+            flex: 1,
+            padding: "14px",
+            background: matchedRules.length > 0 ? "#f0faf0" : "#f5f5f5",
+            border: `1px solid ${matchedRules.length > 0 ? "#b8e0b8" : "#e5e5e5"}`,
+            borderRadius: "10px",
+            textAlign: "center",
+          }}
+        >
+          <p
+            style={{
+              margin: "0 0 4px",
+              fontSize: "24px",
+              fontWeight: 700,
+              color: matchedRules.length > 0 ? "#2d7a2d" : "#999",
+            }}
+          >
+            {matchedRules.length}
+          </p>
+          <p style={{ margin: 0, fontSize: "13px", color: "#666" }}>
+            Rules matched
+          </p>
+        </div>
+        <div
+          style={{
+            flex: 1,
+            padding: "14px",
+            background: jobs.length > 0 ? "#f0f6ff" : "#f5f5f5",
+            border: `1px solid ${jobs.length > 0 ? "#ccdeff" : "#e5e5e5"}`,
+            borderRadius: "10px",
+            textAlign: "center",
+          }}
+        >
+          <p
+            style={{
+              margin: "0 0 4px",
+              fontSize: "24px",
+              fontWeight: 700,
+              color: jobs.length > 0 ? "#1a5fbf" : "#999",
+            }}
+          >
+            {jobs.length}
+          </p>
+          <p style={{ margin: 0, fontSize: "13px", color: "#666" }}>
+            Jobs created
+          </p>
+        </div>
+      </div>
+
+      {/* Event info */}
+      <div
+        style={{
+          padding: "14px",
+          background: "#fafafa",
+          border: "1px solid #eee",
+          borderRadius: "10px",
+        }}
+      >
+        <p style={{ margin: "0 0 6px", fontSize: "13px", fontWeight: 600 }}>
+          Event
+        </p>
+        <p style={{ margin: "2px 0", fontSize: "13px", color: "#555" }}>
+          · Issue key: <strong>{result.event?.issueKey || "—"}</strong>
+        </p>
+        <p style={{ margin: "2px 0", fontSize: "13px", color: "#555" }}>
+          · Department:{" "}
+          <strong>{formatDepartment(result.event?.department)}</strong>
+        </p>
+      </div>
+
+      {/* Matched rules */}
+      {matchedRules.length > 0 && (
+        <div
+          style={{
+            padding: "14px",
+            background: "#fafafa",
+            border: "1px solid #eee",
+            borderRadius: "10px",
+          }}
+        >
+          <p style={{ margin: "0 0 6px", fontSize: "13px", fontWeight: 600 }}>
+            Matched Rules
+          </p>
+          {matchedRules.map((rule) => (
+            <p
+              key={rule._id}
+              style={{ margin: "2px 0", fontSize: "13px", color: "#555" }}
+            >
+              · {rule.name}
+            </p>
+          ))}
+        </div>
+      )}
+
+      {/* Triggered jobs */}
+      {jobs.length > 0 && (
+        <div
+          style={{
+            padding: "14px",
+            background: "#fafafa",
+            border: "1px solid #eee",
+            borderRadius: "10px",
+          }}
+        >
+          <p style={{ margin: "0 0 6px", fontSize: "13px", fontWeight: 600 }}>
+            Triggered Actions
+          </p>
+          {jobs.map((job) => (
+            <p
+              key={job._id || `${job.type}-${job.issueKey}`}
+              style={{ margin: "2px 0", fontSize: "13px", color: "#555" }}
+            >
+              · {formatJobType(job.type)}
+            </p>
+          ))}
+        </div>
+      )}
+
+      {matchedRules.length === 0 && (
+        <p style={{ margin: 0, fontSize: "13px", color: "#999" }}>
+          No rules matched this simulation. Check your active rules
+          configuration.
+        </p>
+      )}
+    </div>
+  );
 }
 
-function formatJobType(type) {
-  switch (type) {
-    case "ADD_COMMENT":
-      return "Add Jira comment";
-    case "SEND_EMAIL":
-      return "Send manager email";
-    default:
-      return type;
-  }
-}
+// main Component
 
 export default function DemoPage() {
   const [form, setForm] = useState(initialForm);
@@ -47,10 +168,7 @@ export default function DemoPage() {
   const [submitting, setSubmitting] = useState(false);
 
   const handleChange = (e) => {
-    setForm((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const handleTrigger = async (e) => {
@@ -63,18 +181,28 @@ export default function DemoPage() {
       const res = await client.post("/demo/events", form);
       setResult(res.data.data);
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to trigger simulation");
+      setError(err.response?.data?.message || "Failed to trigger simulation.");
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const inputStyle = {
+    width: "100%",
+    padding: "8px 10px",
+    fontSize: "14px",
+    border: "1px solid #e5e5e5",
+    borderRadius: "8px",
+    boxSizing: "border-box",
+    background: "#fff",
   };
 
   return (
     <div>
       <h1 style={{ marginBottom: "8px" }}>Simulation</h1>
       <p style={{ marginTop: 0, color: "#666", marginBottom: "20px" }}>
-        Simulate an inbound ticket event to validate rule matching, job creation
-        and worker execution
+        Simulate an inbound ticket event to validate rule matching, job
+        creation, and worker execution.
       </p>
 
       <div
@@ -85,6 +213,7 @@ export default function DemoPage() {
           alignItems: "start",
         }}
       >
+        {/* Form */}
         <div
           style={{
             background: "#fff",
@@ -93,12 +222,18 @@ export default function DemoPage() {
             padding: "20px",
           }}
         >
-          <h2 style={{ marginTop: 0, marginBottom: "8px" }}>
+          <h2 style={{ marginTop: 0, marginBottom: "4px", fontSize: "16px" }}>
             Trigger Simulation
           </h2>
-          <p style={{ marginTop: 0, color: "#666", marginBottom: "16px" }}>
-            Use controlled test values to run the automation pipeline without
-            creating a real user ticket from the main workflow
+          <p
+            style={{
+              marginTop: 0,
+              color: "#666",
+              fontSize: "13px",
+              marginBottom: "16px",
+            }}
+          >
+            Run the automation pipeline without creating a real Jira ticket.
           </p>
 
           <form
@@ -106,37 +241,58 @@ export default function DemoPage() {
             style={{ display: "flex", flexDirection: "column", gap: "12px" }}
           >
             <div>
-              <div style={{ marginBottom: "6px", fontWeight: 600 }}>
+              <div
+                style={{
+                  marginBottom: "6px",
+                  fontWeight: 600,
+                  fontSize: "14px",
+                }}
+              >
                 Event Type
               </div>
               <select
                 name="eventType"
                 value={form.eventType}
                 onChange={handleChange}
+                style={inputStyle}
               >
                 <option value="issue_created">Issue created</option>
               </select>
             </div>
 
             <div>
-              <div style={{ marginBottom: "6px", fontWeight: 600 }}>
+              <div
+                style={{
+                  marginBottom: "6px",
+                  fontWeight: 600,
+                  fontSize: "14px",
+                }}
+              >
                 Issue Key
               </div>
               <input
                 name="issueKey"
                 value={form.issueKey}
                 onChange={handleChange}
+                style={inputStyle}
               />
             </div>
 
             <div>
-              <div style={{ marginBottom: "6px", fontWeight: 600 }}>
+              <div
+                style={{
+                  marginBottom: "6px",
+                  fontWeight: 600,
+                  fontSize: "14px",
+                }}
+              >
                 Priority
               </div>
               <select
                 name="priority"
                 value={form.priority}
                 onChange={handleChange}
+                style={inputStyle}
               >
                 <option value="high">High</option>
                 <option value="medium">Medium</option>
@@ -145,31 +301,66 @@ export default function DemoPage() {
             </div>
 
             <div>
-              <div style={{ marginBottom: "6px", fontWeight: 600 }}>
+              <div
+                style={{
+                  marginBottom: "6px",
+                  fontWeight: 600,
+                  fontSize: "14px",
+                }}
+              >
                 Department
               </div>
               <select
                 name="department"
                 value={form.department}
                 onChange={handleChange}
+                style={inputStyle}
               >
-                <option value="warehouse">Warehouse</option>
-                <option value="mechanic">Mechanic</option>
-                <option value="body_shop">Body Shop</option>
-                <option value="painting">Painting</option>
-                <option value="inspection">Inspection</option>
-                <option value="customer_service">Customer Service</option>
+                {departmentOptions.map((d) => (
+                  <option key={d} value={d}>
+                    {formatDepartment(d)}
+                  </option>
+                ))}
               </select>
             </div>
 
-            <button type="submit" disabled={submitting}>
-              {submitting ? "Running Simulation..." : "Run Simulation"}
+            <button
+              type="submit"
+              disabled={submitting}
+              style={{
+                padding: "10px",
+                fontSize: "14px",
+                fontWeight: 600,
+                background: "#1a1a1a",
+                color: "#fff",
+                border: "none",
+                borderRadius: "8px",
+                cursor: "pointer",
+                marginTop: "4px",
+              }}
+            >
+              {submitting ? "Running…" : "Run Simulation"}
             </button>
           </form>
 
-          {error && <p style={{ color: "red", marginTop: "12px" }}>{error}</p>}
+          {error && (
+            <div
+              style={{
+                marginTop: "14px",
+                background: "#fff5f5",
+                border: "1px solid #f3c2c2",
+                borderRadius: "8px",
+                padding: "12px 14px",
+                color: "#c0392b",
+                fontSize: "14px",
+              }}
+            >
+              {error}
+            </div>
+          )}
         </div>
 
+        {/* Result */}
         <div
           style={{
             background: "#fff",
@@ -178,51 +369,16 @@ export default function DemoPage() {
             padding: "20px",
           }}
         >
-          <h2 style={{ marginTop: 0 }}>Simulation Result</h2>
-
-          {!result ? (
-            <p>No simulation has been run yet.</p>
+          <h2 style={{ marginTop: 0, marginBottom: "16px", fontSize: "16px" }}>
+            Simulation Result
+          </h2>
+          {result ? (
+            <SimulationResult result={result} />
           ) : (
-            <div>
-              <p style={{ margin: "6px 0" }}>
-                <strong>Issue Key:</strong> {result.event?.issueKey || "-"}
-              </p>
-              <p style={{ margin: "6px 0" }}>
-                <strong>Department:</strong>{" "}
-                {formatDepartment(result.event?.department)}
-              </p>
-              <p style={{ margin: "6px 0" }}>
-                <strong>Matched Rules:</strong>{" "}
-                {result.matchedRules?.length || 0}
-              </p>
-              <p style={{ margin: "6px 0" }}>
-                <strong>Triggered Actions:</strong> {result.jobs?.length || 0}
-              </p>
-
-              {result.matchedRules?.length > 0 && (
-                <div style={{ marginTop: "12px" }}>
-                  <strong>Matched Rule Names:</strong>
-                  <ul style={{ marginTop: "8px" }}>
-                    {result.matchedRules.map((rule) => (
-                      <li key={rule._id}>{rule.name}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {result.jobs?.length > 0 && (
-                <div style={{ marginTop: "12px" }}>
-                  <strong>Triggered Action Types:</strong>
-                  <ul style={{ marginTop: "8px" }}>
-                    {result.jobs.map((job) => (
-                      <li key={job._id || `${job.type}-${job.issueKey}`}>
-                        {formatJobType(job.type)}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
+            <p style={{ color: "#999", fontSize: "14px" }}>
+              Run a simulation to see rule matching and job creation results
+              here.
+            </p>
           )}
         </div>
       </div>

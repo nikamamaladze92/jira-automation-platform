@@ -1,97 +1,156 @@
 //main layout
 // users link for admin only
 
-// Main layout
-// Purpose:
-// - shared navigation/header
-// - cleaner product-style navigation
-
-import { Link, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+
+const styles = {
+  wrapper: {
+    minHeight: "100vh",
+    backgroundColor: "#f7f8fa",
+    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+    color: "#1a1a1a",
+  },
+  header: {
+    backgroundColor: "#fff",
+    borderBottom: "1px solid #e5e5e5",
+    padding: "0 32px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    height: "60px",
+    position: "sticky",
+    top: 0,
+    zIndex: 100,
+  },
+  brand: {
+    fontWeight: 700,
+    fontSize: "16px",
+    color: "#1a1a1a",
+    textDecoration: "none",
+    whiteSpace: "nowrap",
+  },
+  nav: {
+    display: "flex",
+    alignItems: "center",
+    gap: "4px",
+    flex: 1,
+    marginLeft: "32px",
+  },
+  userInfo: {
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+    whiteSpace: "nowrap",
+  },
+  userName: {
+    fontSize: "14px",
+    color: "#666",
+  },
+  logoutBtn: {
+    fontSize: "14px",
+    padding: "6px 14px",
+    borderRadius: "6px",
+    border: "1px solid #e5e5e5",
+    background: "#fff",
+    cursor: "pointer",
+    color: "#1a1a1a",
+  },
+  main: {
+    maxWidth: "1200px",
+    margin: "0 auto",
+    padding: "32px 32px",
+  },
+};
+
+function navLinkStyle({ isActive }) {
+  return {
+    fontSize: "14px",
+    fontWeight: isActive ? 600 : 400,
+    color: isActive ? "#1a1a1a" : "#666",
+    textDecoration: "none",
+    padding: "6px 10px",
+    borderRadius: "6px",
+    backgroundColor: isActive ? "#f0f0f0" : "transparent",
+    transition: "background-color 0.15s, color 0.15s",
+  };
+}
 
 export default function Layout({ children }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+
   return (
-    <div style={{ padding: "24px", fontFamily: "Arial, sans-serif" }}>
-      <header
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "24px",
-          borderBottom: "1px solid #ddd",
-          paddingBottom: "12px",
-          gap: "20px",
-          flexWrap: "wrap",
-        }}
-      >
-        <div>
-          <h2 style={{ margin: 0 }}>Jira Automation Platform</h2>
-          <p style={{ margin: "4px 0 0", color: "#666" }}>
-            Internal operations dashboard for ticket automation
-          </p>
-        </div>
+    <div style={styles.wrapper}>
+      <header style={styles.header}>
+        <NavLink to="/" style={styles.brand}>
+          Jira Automation
+        </NavLink>
 
-        <nav style={{ marginBottom: "20px" }}>
-          <Link to="/" style={{ marginRight: "15px" }}>
+        <nav style={styles.nav}>
+          <NavLink to="/" end style={navLinkStyle}>
             Overview
-          </Link>
+          </NavLink>
 
-          <Link to="/tickets" style={{ marginRight: "15px" }}>
+          <NavLink to="/tickets" style={navLinkStyle}>
             Create Ticket
-          </Link>
+          </NavLink>
 
           {(user?.role === "manager" || user?.role === "admin") && (
-            <Link to="/rules" style={{ marginRight: "15px" }}>
-              Automation Rules
-            </Link>
+            <NavLink to="/rules" style={navLinkStyle}>
+              Rules
+            </NavLink>
           )}
 
           {user?.role === "admin" && (
             <>
-              <Link to="/jobs" style={{ marginRight: "15px" }}>
-                Automation Jobs
-              </Link>
+              <NavLink to="/jobs" style={navLinkStyle}>
+                Jobs
+              </NavLink>
 
-              <Link to="/executions" style={{ marginRight: "15px" }}>
-                Execution History
-              </Link>
+              <NavLink to="/executions" style={navLinkStyle}>
+                Executions
+              </NavLink>
 
-              <Link to="/events" style={{ marginRight: "15px" }}>
+              <NavLink to="/events" style={navLinkStyle}>
                 Events
-              </Link>
+              </NavLink>
 
-              <Link to="/demo" style={{ marginRight: "15px" }}>
+              <NavLink to="/demo" style={navLinkStyle}>
                 Demo
-              </Link>
+              </NavLink>
 
-              <Link to="/users" style={{ marginRight: "15px" }}>
-                User Admin
-              </Link>
+              <NavLink to="/users" style={navLinkStyle}>
+                Users
+              </NavLink>
             </>
           )}
         </nav>
 
-        <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-          <span>{user ? `${user.name} (${user.role})` : "Not logged in"}</span>
+        <div style={styles.userInfo}>
+          {user && (
+            <span style={styles.userName}>
+              {user.name} · {user.role}
+            </span>
+          )}
           {user ? (
-            <button
-              onClick={() => {
-                logout();
-                navigate("/login");
-              }}
-            >
+            <button style={styles.logoutBtn} onClick={handleLogout}>
               Logout
             </button>
           ) : (
-            <Link to="/login">Login</Link>
+            <NavLink to="/login" style={navLinkStyle}>
+              Login
+            </NavLink>
           )}
         </div>
       </header>
 
-      <main>{children}</main>
+      <main style={styles.main}>{children}</main>
     </div>
   );
 }

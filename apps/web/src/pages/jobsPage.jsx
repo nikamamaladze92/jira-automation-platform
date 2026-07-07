@@ -1,51 +1,142 @@
 import { useEffect, useState, useCallback } from "react";
 import client from "../api/client";
+import { formatJobType, formatJobStatus, statusColor } from "../styles/tokens";
 
 const statusOptions = ["", "queued", "processing", "succeeded", "failed"];
 const typeOptions = ["", "ADD_COMMENT", "SEND_EMAIL"];
 
-function formatJobType(type) {
-  switch (type) {
-    case "ADD_COMMENT":
-      return "Add Jira comment";
-    case "SEND_EMAIL":
-      return "Send manager email";
-    default:
-      return type;
-  }
+const emptyFilters = { status: "", type: "", issueKey: "" };
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function SkeletonRow() {
+  return (
+    <div
+      style={{
+        border: "1px solid #eee",
+        borderRadius: "10px",
+        padding: "14px",
+      }}
+    >
+      {[70, 50, 40].map((w, i) => (
+        <div
+          key={i}
+          style={{
+            width: `${w}%`,
+            height: "13px",
+            background: "#f0f0f0",
+            borderRadius: "6px",
+            marginBottom: i < 2 ? "8px" : 0,
+          }}
+        />
+      ))}
+    </div>
+  );
 }
 
-function formatJobStatus(status) {
-  switch (status) {
-    case "queued":
-      return "Queued";
-    case "processing":
-      return "Processing";
-    case "succeeded":
-      return "Succeeded";
-    case "failed":
-      return "Failed";
-    default:
-      return status;
-  }
+function JobCard({ job }) {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <div
+      style={{
+        border: "1px solid #eee",
+        borderRadius: "10px",
+        padding: "14px",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+        }}
+      >
+        <div>
+          <span style={{ fontWeight: 600, fontSize: "15px" }}>
+            {job.issueKey || "—"}
+          </span>
+          <span style={{ marginLeft: "10px", fontSize: "13px", color: "#666" }}>
+            {formatJobType(job.type)}
+          </span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <span
+            style={{
+              fontSize: "13px",
+              fontWeight: 600,
+              color: statusColor(job.status),
+            }}
+          >
+            {formatJobStatus(job.status)}
+          </span>
+          <button
+            onClick={() => setExpanded((prev) => !prev)}
+            style={{
+              fontSize: "12px",
+              color: "#666",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: 0,
+            }}
+          >
+            {expanded ? "Less" : "More"}
+          </button>
+        </div>
+      </div>
+
+      <p style={{ margin: "6px 0 0", fontSize: "13px", color: "#999" }}>
+        Attempts: {job.attempts ?? 0} ·{" "}
+        {job.createdAt ? new Date(job.createdAt).toLocaleString() : "—"}
+      </p>
+
+      {expanded && (
+        <div
+          style={{
+            marginTop: "12px",
+            paddingTop: "12px",
+            borderTop: "1px solid #f0f0f0",
+            display: "flex",
+            flexDirection: "column",
+            gap: "4px",
+          }}
+        >
+          {[
+            ["Worker lock", job.lockedBy],
+            ["Event ID", job.eventId],
+            ["Rule ID", job.ruleId],
+            ["Comment", job.payload?.comment],
+            ["Account ID", job.payload?.accountId],
+          ].map(([label, value]) =>
+            value ? (
+              <p
+                key={label}
+                style={{ margin: 0, fontSize: "13px", color: "#555" }}
+              >
+                <strong>{label}:</strong> {value}
+              </p>
+            ) : null,
+          )}
+          {job.error && (
+            <p style={{ margin: 0, fontSize: "13px", color: "#c0392b" }}>
+              <strong>Error:</strong> {job.error}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
-const filters = {
-  status: "",
-  type: "",
-  issueKey: "",
-};
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function JobsPage() {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
-  // doesn't trigger fetch
-  const [draftFilters, setDraftFilters] = useState(filters);
-
-  // triggers the fetch
-  const [appliedFilters, setAppliedFilters] = useState(filters);
+  const [draftFilters, setDraftFilters] = useState(emptyFilters);
+  const [appliedFilters, setAppliedFilters] = useState(emptyFilters);
 
   const loadJobs = useCallback(async () => {
     try {
@@ -61,7 +152,7 @@ export default function JobsPage() {
       const res = await client.get("/jobs", { params });
       setJobs(res.data.data.jobs || []);
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to load jobs");
+      setError(err.response?.data?.message || "Failed to load jobs.");
     } finally {
       setLoading(false);
     }
@@ -76,42 +167,43 @@ export default function JobsPage() {
     setDraftFilters((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleApplyFilters = (e) => {
+  const handleApply = (e) => {
     e.preventDefault();
     setAppliedFilters(draftFilters);
   };
 
-  const handleResetFilters = () => {
-    setDraftFilters(filters);
-    setAppliedFilters(filters);
+  const handleReset = () => {
+    setDraftFilters(emptyFilters);
+    setAppliedFilters(emptyFilters);
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "failed":
-        return "red";
-      case "succeeded":
-        return "green";
-      case "processing":
-        return "#b26b00";
-      case "queued":
-        return "#555";
-      default:
-        return "#333";
-    }
+  const inputStyle = {
+    width: "100%",
+    padding: "8px 10px",
+    fontSize: "14px",
+    border: "1px solid #e5e5e5",
+    borderRadius: "8px",
+    boxSizing: "border-box",
+    background: "#fff",
   };
 
-  if (loading) return <p>Loading jobs</p>;
-  if (error) return <p style={{ color: "red" }}>{error}</p>;
+  const btnStyle = {
+    padding: "8px 16px",
+    fontSize: "14px",
+    borderRadius: "8px",
+    cursor: "pointer",
+    border: "1px solid #e5e5e5",
+  };
 
   return (
     <div>
       <h1 style={{ marginBottom: "8px" }}>Automation Jobs</h1>
       <p style={{ marginTop: 0, color: "#666", marginBottom: "20px" }}>
         Review queued and completed automation work generated after inbound
-        ticket events match active rules
+        ticket events match active rules.
       </p>
 
+      {/* Filters */}
       <div
         style={{
           background: "#fff",
@@ -121,10 +213,11 @@ export default function JobsPage() {
           marginBottom: "20px",
         }}
       >
-        <h2 style={{ marginTop: 0 }}>Filter Jobs</h2>
-
+        <h2 style={{ marginTop: 0, marginBottom: "16px", fontSize: "16px" }}>
+          Filter Jobs
+        </h2>
         <form
-          onSubmit={handleApplyFilters}
+          onSubmit={handleApply}
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
@@ -132,53 +225,85 @@ export default function JobsPage() {
             alignItems: "end",
           }}
         >
-          <label>
-            <div style={{ marginBottom: "6px", fontWeight: 600 }}>Status</div>
+          <div>
+            <div
+              style={{ marginBottom: "6px", fontWeight: 600, fontSize: "14px" }}
+            >
+              Status
+            </div>
             <select
               name="status"
-              value={filters.status}
+              value={draftFilters.status}
               onChange={handleChange}
+              style={inputStyle}
             >
-              {statusOptions.map((status) => (
-                <option key={status || "all-statuses"} value={status}>
-                  {status || "All"}
+              {statusOptions.map((s) => (
+                <option key={s || "all"} value={s}>
+                  {s ? formatJobStatus(s) : "All"}
                 </option>
               ))}
             </select>
-          </label>
+          </div>
 
-          <label>
-            <div style={{ marginBottom: "6px", fontWeight: 600 }}>Type</div>
-            <select name="type" value={filters.type} onChange={handleChange}>
-              {typeOptions.map((type) => (
-                <option key={type || "all-types"} value={type}>
-                  {type ? formatJobType(type) : "All"}
+          <div>
+            <div
+              style={{ marginBottom: "6px", fontWeight: 600, fontSize: "14px" }}
+            >
+              Type
+            </div>
+            <select
+              name="type"
+              value={draftFilters.type}
+              onChange={handleChange}
+              style={inputStyle}
+            >
+              {typeOptions.map((t) => (
+                <option key={t || "all"} value={t}>
+                  {t ? formatJobType(t) : "All"}
                 </option>
               ))}
             </select>
-          </label>
+          </div>
 
-          <label>
-            <div style={{ marginBottom: "6px", fontWeight: 600 }}>
+          <div>
+            <div
+              style={{ marginBottom: "6px", fontWeight: 600, fontSize: "14px" }}
+            >
               Issue Key
             </div>
             <input
               name="issueKey"
-              //placeholder="KAN-3"
-              value={filters.issueKey}
+              placeholder="KAN-3"
+              value={draftFilters.issueKey}
               onChange={handleChange}
+              style={inputStyle}
             />
-          </label>
+          </div>
 
           <div style={{ display: "flex", gap: "10px" }}>
-            <button type="submit">Apply</button>
-            <button type="button" onClick={handleResetFilters}>
-              Reset Filters
+            <button
+              type="submit"
+              style={{
+                ...btnStyle,
+                background: "#1a1a1a",
+                color: "#fff",
+                border: "none",
+              }}
+            >
+              Apply
+            </button>
+            <button
+              type="button"
+              onClick={handleReset}
+              style={{ ...btnStyle, background: "#fff" }}
+            >
+              Reset
             </button>
           </div>
         </form>
       </div>
 
+      {/* Results */}
       <div
         style={{
           background: "#fff",
@@ -187,79 +312,48 @@ export default function JobsPage() {
           padding: "20px",
         }}
       >
-        <h2 style={{ marginTop: 0 }}>Job Activity</h2>
+        <h2 style={{ marginTop: 0, marginBottom: "16px", fontSize: "16px" }}>
+          Job Activity{" "}
+          {!loading && (
+            <span style={{ fontWeight: 400, color: "#999", fontSize: "14px" }}>
+              ({jobs.length} results)
+            </span>
+          )}
+        </h2>
 
-        {jobs.length === 0 ? (
-          <p>No automation jobs found</p>
-        ) : (
+        {error && (
+          <div
+            style={{
+              background: "#fff5f5",
+              border: "1px solid #f3c2c2",
+              borderRadius: "8px",
+              padding: "12px 14px",
+              color: "#c0392b",
+              fontSize: "14px",
+            }}
+          >
+            {error}
+          </div>
+        )}
+
+        {loading ? (
           <div
             style={{ display: "flex", flexDirection: "column", gap: "12px" }}
           >
+            {[...Array(4)].map((_, i) => (
+              <SkeletonRow key={i} />
+            ))}
+          </div>
+        ) : jobs.length === 0 ? (
+          <p style={{ color: "#999", fontSize: "14px" }}>
+            No automation jobs found.
+          </p>
+        ) : (
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: "10px" }}
+          >
             {jobs.map((job) => (
-              <div
-                key={job._id}
-                style={{
-                  border: "1px solid #eee",
-                  borderRadius: "10px",
-                  padding: "14px",
-                }}
-              >
-                <p style={{ margin: "4px 0" }}>
-                  <strong>Issue:</strong> {job.issueKey}
-                </p>
-
-                <p style={{ margin: "4px 0" }}>
-                  <strong>Action:</strong> {formatJobType(job.type)}
-                </p>
-
-                <p style={{ margin: "4px 0" }}>
-                  <strong>Status:</strong>{" "}
-                  <span style={{ color: getStatusColor(job.status) }}>
-                    {formatJobStatus(job.status)}
-                  </span>
-                </p>
-
-                <p style={{ margin: "4px 0" }}>
-                  <strong>Attempts:</strong> {job.attempts ?? 0}
-                </p>
-
-                <p style={{ margin: "4px 0" }}>
-                  <strong>Worker lock:</strong> {job.lockedBy || "-"}
-                </p>
-
-                <p style={{ margin: "4px 0" }}>
-                  <strong>Event ID:</strong> {job.eventId || "-"}
-                </p>
-
-                <p style={{ margin: "4px 0" }}>
-                  <strong>Rule ID:</strong> {job.ruleId || "-"}
-                </p>
-
-                <p style={{ margin: "4px 0" }}>
-                  <strong>Created:</strong>{" "}
-                  {job.createdAt
-                    ? new Date(job.createdAt).toLocaleString()
-                    : "-"}
-                </p>
-
-                {job.payload?.comment && (
-                  <p style={{ margin: "4px 0" }}>
-                    <strong>Comment:</strong> {job.payload.comment}
-                  </p>
-                )}
-
-                {job.payload?.accountId && (
-                  <p style={{ margin: "4px 0" }}>
-                    <strong>Account ID:</strong> {job.payload.accountId}
-                  </p>
-                )}
-
-                {job.error && (
-                  <p style={{ margin: "4px 0", color: "red" }}>
-                    <strong>Error:</strong> {job.error}
-                  </p>
-                )}
-              </div>
+              <JobCard key={job._id} job={job} />
             ))}
           </div>
         )}

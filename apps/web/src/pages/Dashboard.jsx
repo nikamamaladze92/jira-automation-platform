@@ -2,56 +2,124 @@ import { useEffect, useState } from "react";
 import client from "../api/client";
 import Summary from "../components/Summary";
 import { useAuth } from "../context/AuthContext";
+import {
+  formatEventType,
+  formatSource,
+  formatDepartment,
+  formatJobType,
+  statusColor,
+} from "../styles/tokens";
 
-function formatExecutionType(type) {
-  switch (type) {
-    case "ADD_COMMENT":
-      return "Add Jira comment";
-    case "SEND_EMAIL":
-      return "Send manager email";
-    default:
-      return type;
-  }
+// Subcomponents
+
+function SkeletonCard() {
+  return (
+    <div
+      style={{
+        background: "#fff",
+        border: "1px solid #e5e5e5",
+        borderRadius: "12px",
+        padding: "20px",
+      }}
+    >
+      <div
+        style={{
+          width: "40%",
+          height: "14px",
+          background: "#f0f0f0",
+          borderRadius: "6px",
+          marginBottom: "12px",
+        }}
+      />
+      <div
+        style={{
+          width: "60%",
+          height: "12px",
+          background: "#f5f5f5",
+          borderRadius: "6px",
+          marginBottom: "8px",
+        }}
+      />
+      <div
+        style={{
+          width: "50%",
+          height: "12px",
+          background: "#f5f5f5",
+          borderRadius: "6px",
+        }}
+      />
+    </div>
+  );
 }
 
-function formatEventType(type) {
-  switch (type) {
-    case "issue_created":
-      return "Issue created";
-    default:
-      return type;
-  }
+function ExecutionItem({ execution }) {
+  return (
+    <div
+      style={{
+        border: "1px solid #eee",
+        borderRadius: "10px",
+        padding: "12px 14px",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <span style={{ fontWeight: 600, fontSize: "14px" }}>
+          {execution.issueKey || "—"}
+        </span>
+        <span
+          style={{
+            fontSize: "13px",
+            fontWeight: 600,
+            color: statusColor(execution.status),
+          }}
+        >
+          {execution.status}
+        </span>
+      </div>
+      <p style={{ margin: "4px 0 0", fontSize: "13px", color: "#666" }}>
+        {formatJobType(execution.type)}
+      </p>
+    </div>
+  );
 }
 
-function formatDepartment(value) {
-  switch (value) {
-    case "warehouse":
-      return "Warehouse";
-    case "mechanic":
-      return "Mechanic";
-    case "body_shop":
-      return "Body Shop";
-    case "painting":
-      return "Painting";
-    case "inspection":
-      return "Inspection";
-    case "customer_service":
-      return "Customer Service";
-    default:
-      return value || "-";
-  }
+function EventItem({ event }) {
+  return (
+    <div
+      style={{
+        border: "1px solid #eee",
+        borderRadius: "10px",
+        padding: "12px 14px",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <span style={{ fontWeight: 600, fontSize: "14px" }}>
+          {event.issueKey || "—"}
+        </span>
+        <span style={{ fontSize: "13px", color: "#666" }}>
+          {formatSource(event.source)}
+        </span>
+      </div>
+      <p style={{ margin: "4px 0 0", fontSize: "13px", color: "#666" }}>
+        {formatEventType(event.eventType)} ·{" "}
+        {formatDepartment(event.department)}
+      </p>
+    </div>
+  );
 }
 
-function formatSource(source) {
-  switch (source) {
-    case "jira":
-      return "Jira";
-    case "demo":
-      return "Simulation";
-    default:
-      return source || "-";
-  }
-}
+// Main Component
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -63,67 +131,111 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!user) return;
+
     const loadDashboard = async () => {
       try {
-        if (user?.role === "admin") {
+        if (user.role === "admin") {
           const [summaryRes, executionsRes, eventsRes] = await Promise.all([
             client.get("/dashboard/summary"),
             client.get("/executions"),
             client.get("/events"),
           ]);
-
           setSummary(summaryRes.data.data);
           setExecutions((executionsRes.data.data || []).slice(0, 5));
           setEvents((eventsRes.data.data.events || []).slice(0, 5));
-        } else if (user?.role === "manager") {
+        } else if (user.role === "manager") {
           const summaryRes = await client.get("/dashboard/summary");
           setSummary(summaryRes.data.data);
-          setExecutions([]);
-          setEvents([]);
-        } else {
-          setSummary(null);
-          setExecutions([]);
-          setEvents([]);
         }
       } catch (err) {
-        setError(err.response?.data?.message || "Failed to load dashboard");
+        setError(err.response?.data?.message || "Failed to load dashboard.");
       } finally {
         setLoading(false);
       }
     };
 
-    if (user) {
-      loadDashboard();
-    }
+    loadDashboard();
   }, [user]);
 
-  if (loading) return <p>Loading dashboard...</p>;
-  if (error) return <p style={{ color: "red" }}>{error}</p>;
+  if (loading) {
+    return (
+      <div>
+        <h1 style={{ marginBottom: "8px" }}>Operations Overview</h1>
+        <p style={{ marginTop: 0, color: "#666", marginBottom: "24px" }}>
+          Monitor ticket automation activity based on your level of access.
+        </p>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+            gap: "16px",
+            marginBottom: "24px",
+          }}
+        >
+          {[...Array(5)].map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
+        </div>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "24px",
+          }}
+        >
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div
+        style={{
+          background: "#fff5f5",
+          border: "1px solid #f3c2c2",
+          borderRadius: "10px",
+          padding: "16px",
+          color: "#c0392b",
+        }}
+      >
+        {error}
+      </div>
+    );
+  }
 
   return (
     <div>
       <h1 style={{ marginBottom: "8px" }}>Operations Overview</h1>
-      <p style={{ marginTop: 0, color: "#666", marginBottom: "20px" }}>
+      <p style={{ marginTop: 0, color: "#666", marginBottom: "24px" }}>
         Monitor ticket automation activity based on your level of access.
       </p>
 
+      {/* Staff view */}
       {user?.role === "staff" && (
         <div
           style={{
             background: "#fff",
             border: "1px solid #e5e5e5",
             borderRadius: "12px",
-            padding: "20px",
+            padding: "24px",
           }}
         >
-          <h2 style={{ marginTop: 0 }}>Welcome</h2>
-          <p style={{ marginBottom: 0 }}>
-            Use the ticket page to submit new Jira requests. Automation results
-            for your latest submission will appear there after creation.
+          <h2 style={{ marginTop: 0, marginBottom: "8px" }}>
+            Welcome, {user.name}
+          </h2>
+          <p style={{ margin: 0, color: "#666" }}>
+            Use the <strong>Create Ticket</strong> page to submit new Jira
+            requests. Automation results for your latest submission will appear
+            after creation.
           </p>
         </div>
       )}
 
+      {/* Manager + Admin view */}
       {(user?.role === "manager" || user?.role === "admin") && summary && (
         <>
           <div
@@ -131,7 +243,7 @@ export default function DashboardPage() {
               display: "grid",
               gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
               gap: "16px",
-              marginBottom: "24px",
+              marginBottom: "28px",
             }}
           >
             <Summary title="Total Jobs" value={summary.jobs.total} />
@@ -141,6 +253,7 @@ export default function DashboardPage() {
             <Summary title="Events" value={summary.events.total} />
           </div>
 
+          {/* Admin-only activity panels */}
           {user?.role === "admin" && (
             <div
               style={{
@@ -157,47 +270,32 @@ export default function DashboardPage() {
                   padding: "20px",
                 }}
               >
-                <h2 style={{ marginTop: 0 }}>Recent Executions</h2>
-
+                <h2
+                  style={{
+                    marginTop: 0,
+                    marginBottom: "16px",
+                    fontSize: "16px",
+                  }}
+                >
+                  Recent Executions
+                </h2>
                 {executions.length === 0 ? (
-                  <p>No recent executions found.</p>
+                  <p style={{ color: "#999", fontSize: "14px" }}>
+                    No recent executions found.
+                  </p>
                 ) : (
                   <div
                     style={{
                       display: "flex",
                       flexDirection: "column",
-                      gap: "12px",
+                      gap: "10px",
                     }}
                   >
                     {executions.map((execution) => (
-                      <div
+                      <ExecutionItem
                         key={execution._id}
-                        style={{
-                          border: "1px solid #eee",
-                          borderRadius: "10px",
-                          padding: "12px",
-                        }}
-                      >
-                        <p style={{ margin: "4px 0" }}>
-                          <strong>{execution.issueKey || "-"}</strong> —{" "}
-                          {formatExecutionType(execution.type)}
-                        </p>
-                        <p style={{ margin: "4px 0" }}>
-                          Status:{" "}
-                          <span
-                            style={{
-                              color:
-                                execution.status === "failed"
-                                  ? "red"
-                                  : execution.status === "succeeded"
-                                    ? "green"
-                                    : "#333",
-                            }}
-                          >
-                            {execution.status}
-                          </span>
-                        </p>
-                      </div>
+                        execution={execution}
+                      />
                     ))}
                   </div>
                 )}
@@ -211,36 +309,29 @@ export default function DashboardPage() {
                   padding: "20px",
                 }}
               >
-                <h2 style={{ marginTop: 0 }}>Recent Inbound Events</h2>
-
+                <h2
+                  style={{
+                    marginTop: 0,
+                    marginBottom: "16px",
+                    fontSize: "16px",
+                  }}
+                >
+                  Recent Inbound Events
+                </h2>
                 {events.length === 0 ? (
-                  <p>No recent events found.</p>
+                  <p style={{ color: "#999", fontSize: "14px" }}>
+                    No recent events found.
+                  </p>
                 ) : (
                   <div
                     style={{
                       display: "flex",
                       flexDirection: "column",
-                      gap: "12px",
+                      gap: "10px",
                     }}
                   >
                     {events.map((event) => (
-                      <div
-                        key={event._id}
-                        style={{
-                          border: "1px solid #eee",
-                          borderRadius: "10px",
-                          padding: "12px",
-                        }}
-                      >
-                        <p style={{ margin: "4px 0" }}>
-                          <strong>{event.issueKey || "-"}</strong> —{" "}
-                          {formatEventType(event.eventType)}
-                        </p>
-                        <p style={{ margin: "4px 0" }}>
-                          Source: {formatSource(event.source)} | Department:{" "}
-                          {formatDepartment(event.department)}
-                        </p>
-                      </div>
+                      <EventItem key={event._id} event={event} />
                     ))}
                   </div>
                 )}

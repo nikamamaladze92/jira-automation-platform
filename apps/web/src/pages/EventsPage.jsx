@@ -1,46 +1,113 @@
-// show incoming events display info
-
 import { useEffect, useState } from "react";
 import client from "../api/client";
+import {
+  formatEventType,
+  formatSource,
+  formatDepartment,
+} from "../styles/tokens";
 
-function formatEventType(type) {
-  switch (type) {
-    case "issue_created":
-      return "Issue created";
-    default:
-      return type;
-  }
+// subcomponents
+
+function SkeletonRow() {
+  return (
+    <div
+      style={{
+        border: "1px solid #eee",
+        borderRadius: "10px",
+        padding: "14px",
+      }}
+    >
+      {[50, 70, 40].map((w, i) => (
+        <div
+          key={i}
+          style={{
+            width: `${w}%`,
+            height: "13px",
+            background: "#f0f0f0",
+            borderRadius: "6px",
+            marginBottom: i < 2 ? "8px" : 0,
+          }}
+        />
+      ))}
+    </div>
+  );
 }
 
+function EventCard({ event }) {
+  return (
+    <div
+      style={{
+        border: "1px solid #eee",
+        borderRadius: "10px",
+        padding: "14px",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          marginBottom: "8px",
+        }}
+      >
+        <span style={{ fontWeight: 600, fontSize: "15px" }}>
+          {event.issueKey || "—"}
+        </span>
+        <span
+          style={{
+            fontSize: "12px",
+            fontWeight: 600,
+            padding: "3px 10px",
+            borderRadius: "20px",
+            background: event.processed ? "#f0faf0" : "#f5f5f5",
+            color: event.processed ? "#2d7a2d" : "#999",
+            border: `1px solid ${event.processed ? "#b8e0b8" : "#e5e5e5"}`,
+          }}
+        >
+          {event.processed ? "Processed" : "Pending"}
+        </span>
+      </div>
 
+      <div
+        style={{
+          display: "flex",
+          gap: "16px",
+          flexWrap: "wrap",
+          marginBottom: "6px",
+        }}
+      >
+        <p style={{ margin: 0, fontSize: "13px", color: "#555" }}>
+          <strong>Event:</strong> {formatEventType(event.eventType)}
+        </p>
+        <p style={{ margin: 0, fontSize: "13px", color: "#555" }}>
+          <strong>Source:</strong> {formatSource(event.source)}
+        </p>
+      </div>
 
-function formatSource(source) {
-  switch (source) {
-    case "jira":
-      return "Jira";
-    default:
-      return source || "-";
-  }
+      <div
+        style={{
+          display: "flex",
+          gap: "16px",
+          flexWrap: "wrap",
+          marginBottom: "6px",
+        }}
+      >
+        <p style={{ margin: 0, fontSize: "13px", color: "#555" }}>
+          <strong>Priority:</strong> {event.priority || "—"}
+        </p>
+        <p style={{ margin: 0, fontSize: "13px", color: "#555" }}>
+          <strong>Department:</strong> {formatDepartment(event.department)}
+        </p>
+      </div>
+
+      <p style={{ margin: 0, fontSize: "13px", color: "#999" }}>
+        {event.createdAt ? new Date(event.createdAt).toLocaleString() : "—"}
+      </p>
+    </div>
+  );
 }
 
-function formatDepartment(value) {
-  switch (value) {
-    case "warehouse":
-      return "Warehouse";
-    case "mechanic":
-      return "Mechanic";
-    case "body_shop":
-      return "Body Shop";
-    case "painting":
-      return "Painting";
-    case "inspection":
-      return "Inspection";
-    case "customer_service":
-      return "Customer Service";
-    default:
-      return value || "-";
-  }
-}
+// main Component
 
 export default function EventsPage() {
   const [events, setEvents] = useState([]);
@@ -53,7 +120,7 @@ export default function EventsPage() {
         const res = await client.get("/events");
         setEvents(res.data.data.events || []);
       } catch (err) {
-        setError(err.response?.data?.message || "Failed to load events");
+        setError(err.response?.data?.message || "Failed to load events.");
       } finally {
         setLoading(false);
       }
@@ -61,9 +128,6 @@ export default function EventsPage() {
 
     loadEvents();
   }, []);
-
-  if (loading) return <p>Loading inbound events...</p>;
-  if (error) return <p style={{ color: "red" }}>{error}</p>;
 
   return (
     <div>
@@ -73,6 +137,22 @@ export default function EventsPage() {
         are evaluated.
       </p>
 
+      {error && (
+        <div
+          style={{
+            background: "#fff5f5",
+            border: "1px solid #f3c2c2",
+            borderRadius: "8px",
+            padding: "12px 14px",
+            color: "#c0392b",
+            fontSize: "14px",
+            marginBottom: "16px",
+          }}
+        >
+          {error}
+        </div>
+      )}
+
       <div
         style={{
           background: "#fff",
@@ -81,53 +161,33 @@ export default function EventsPage() {
           padding: "20px",
         }}
       >
-        {events.length === 0 ? (
-          <p>No inbound events found.</p>
-        ) : (
+        <h2 style={{ marginTop: 0, marginBottom: "16px", fontSize: "16px" }}>
+          Event Log{" "}
+          {!loading && (
+            <span style={{ fontWeight: 400, color: "#999", fontSize: "14px" }}>
+              ({events.length})
+            </span>
+          )}
+        </h2>
+
+        {loading ? (
           <div
             style={{ display: "flex", flexDirection: "column", gap: "12px" }}
           >
+            {[...Array(4)].map((_, i) => (
+              <SkeletonRow key={i} />
+            ))}
+          </div>
+        ) : events.length === 0 ? (
+          <p style={{ color: "#999", fontSize: "14px" }}>
+            No inbound events found.
+          </p>
+        ) : (
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: "10px" }}
+          >
             {events.map((event) => (
-              <div
-                key={event._id}
-                style={{
-                  border: "1px solid #eee",
-                  borderRadius: "10px",
-                  padding: "14px",
-                }}
-              >
-                <p style={{ margin: "4px 0" }}>
-                  <strong>Issue:</strong> {event.issueKey || "-"}
-                </p>
-
-                <p style={{ margin: "4px 0" }}>
-                  <strong>Source:</strong> {formatSource(event.source)}
-                </p>
-
-                <p style={{ margin: "4px 0" }}>
-                  <strong>Event:</strong> {formatEventType(event.eventType)}
-                </p>
-
-                <p style={{ margin: "4px 0" }}>
-                  <strong>Priority:</strong> {event.priority || "-"}
-                </p>
-
-                <p style={{ margin: "4px 0" }}>
-                  <strong>Department:</strong>{" "}
-                  {formatDepartment(event.department)}
-                </p>
-
-                <p style={{ margin: "4px 0" }}>
-                  <strong>Processed:</strong> {event.processed ? "Yes" : "No"}
-                </p>
-
-                <p style={{ margin: "4px 0" }}>
-                  <strong>Received:</strong>{" "}
-                  {event.createdAt
-                    ? new Date(event.createdAt).toLocaleString()
-                    : "-"}
-                </p>
-              </div>
+              <EventCard key={event._id} event={event} />
             ))}
           </div>
         )}
