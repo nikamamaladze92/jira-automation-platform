@@ -12,7 +12,8 @@ import ExecutionsPage from "./pages/ExecutionsPage";
 import EventsPage from "./pages/EventsPage";
 import UsersPage from "./pages/UsersPage";
 import DemoPage from "./pages/DemoPage";
-import JobsPage from "./pages/jobsPage";
+import JobsPage from "./pages/JobsPage";
+import NotFoundPage from "./pages/NotFoundPages";
 
 export default function App() {
   return (
@@ -106,6 +107,15 @@ export default function App() {
                   <DemoPage />
                 </Layout>
               </RoleRoute>
+            }
+          />
+
+          <Route
+            path="*"
+            element={
+              <Layout>
+                <NotFoundPage />
+              </Layout>
             }
           />
         </Routes>

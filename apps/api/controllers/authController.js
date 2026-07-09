@@ -166,11 +166,11 @@ exports.updateUserActive = async (req, res, next) => {
       });
     }
 
-    console.log("UPDATED USER ACTIVE:", {
-      id: user._id,
-      email: user.email,
-      active: user.active,
-    });
+    // console.log("UPDATED USER ACTIVE:", {
+    //   id: user._id,
+    //   email: user.email,
+    //   active: user.active,
+    // });
 
     res.status(200).json({
       status: "success",

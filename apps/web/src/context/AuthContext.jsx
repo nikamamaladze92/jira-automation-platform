@@ -11,7 +11,7 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     const res = await client.post("/auth/login", { email, password });
-    console.log("login response", res.data);
+    //console.log("login response", res.data);
     const token = res.data.token;
 
     localStorage.setItem("token", token);
@@ -36,7 +36,7 @@ export function AuthProvider({ children }) {
     try {
       const res = await client.get("/auth/me");
       setUser(res.data.data.user);
-    } catch (err) {
+    } catch {
       localStorage.removeItem("token");
       setUser(null);
     } finally {
