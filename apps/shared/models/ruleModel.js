@@ -1,4 +1,9 @@
 module.exports = function createRuleModel(mongoose) {
+  // Return cached model if already registered to avoid registration errors
+  if (mongoose.models.Rule) {
+    return mongoose.models.Rule;
+  }
+
   const conditionSchema = new mongoose.Schema(
     {
       field: {
@@ -69,9 +74,5 @@ module.exports = function createRuleModel(mongoose) {
     { timestamps: true },
   );
 
-  //PREVENT OLDER SCHEMA ERROR IN MEMORY
-  if (mongoose.models.Rule) {
-    delete mongoose.models.Rule;
-  }
   return mongoose.model("Rule", ruleSchema);
 };

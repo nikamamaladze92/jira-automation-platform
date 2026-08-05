@@ -1,4 +1,9 @@
 module.exports = function createJobModel(mongoose) {
+  // Return cached model if already registered to avoid re-registration errors
+  if (mongoose.models.Job) {
+    return mongoose.models.Job;
+  }
+
   const jobSchema = new mongoose.Schema(
     {
       type: {
@@ -11,10 +16,6 @@ module.exports = function createJobModel(mongoose) {
       attempts: {
         type: Number,
         default: 0,
-      },
-      createdAt: {
-        type: Date,
-        default: Date.now,
       },
       issueKey: {
         type: String,
@@ -63,9 +64,5 @@ module.exports = function createJobModel(mongoose) {
     { timestamps: true },
   );
 
-  // PREVENT OLDER SCHEMA ERROR IN MEMORY
-  if (mongoose.models.Job) {
-    delete mongoose.models.Job;
-  }
   return mongoose.model("Job", jobSchema);
 };

@@ -1,7 +1,6 @@
 require("dotenv").config();
-//const mongoose = require("mongoose");
 
-const requiredEnvVars = ["JWT_SECRET", "JIRA_PROJECT_KEY"];
+const requiredEnvVars = ["JWT_SECRET", "JIRA_PROJECT_KEY", "DATABASE_ATLAS"];
 
 for (const key of requiredEnvVars) {
   if (!process.env[key]) {
@@ -10,37 +9,32 @@ for (const key of requiredEnvVars) {
   }
 }
 
-const connectDB = require("../shared/db/mongoose");
-
-connectDB();
-
-process.on("uncaughtException", (err) => {
-  console.log("UNCAUGHT EXCEPTION! Shutting down...");
-  console.log(err.name, err.message);
-  process.exit(1);
-});
-
 const app = require("./app");
-
-// const DB =
-//   process.env.NODE_ENV === "production"
-//     ? process.env.DATABASE_ATLAS
-//     : process.env.DATABASE_LOCAL;
-
-// mongoose.connect(DB).then(() => {
-//   console.log("connected");
-// });
+const connectDB = require("../shared/db/mongoose");
 
 const port = process.env.PORT || 3000;
 
-const server = app.listen(port, () => {
-  console.log(`app running on port ${port}`);
+async function startServer() {
+  try {
+    await connectDB();
+
+    const server = app.listen(port, () => {
+      console.log(`API running on port ${port}`);
+    });
+
+    process.on("unhandledRejection", (err) => {
+      console.error("Unhandled rejection — shutting down:", err.message);
+      server.close(() => process.exit(1));
+    });
+  } catch (err) {
+    console.error("Server startup failed:", err.message);
+    process.exit(1);
+  }
+}
+
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught exception — shutting down:", err.message);
+  process.exit(1);
 });
 
-process.on("unhandledRejection", (err) => {
-  console.log("Error! Shutting down");
-  console.log(err.name, err.message);
-  server.close(() => {
-    process.exit(1);
-  });
-});
+startServer();
