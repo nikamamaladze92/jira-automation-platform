@@ -1,6 +1,6 @@
 # Jira Automation Platform
 
-A full-stack automation platform that listens for inbound Jira ticket events, evaluates rule conditions, and triggers automated actions — such as posting Jira comments or sending department manager emails — through a background worker process.
+A full stack operations platform that creates real Jira issues and evaluates configurable automation rules. Designed an asynchronous MongoDB backed job pipeline with atomic worker locking, event and job deduplication, Jira comment actions, department based manager email notifications, role based access control, and execution observability.
 
 ---
 
@@ -16,7 +16,7 @@ A full-stack automation platform that listens for inbound Jira ticket events, ev
 ┌─────────────────────────────────────────────────────────────────┐
 │                     Express REST API                            │
 │                                                                 │
-│  /auth      → Authentication (signup, login, user management)  │
+│  /auth      → Authentication (login, user management)          │
 │  /tickets   → Create Jira tickets + trigger automation         │
 │  /rules     → CRUD for automation rules                        │
 │  /events    → Inbound event log                                │
@@ -43,6 +43,8 @@ A full-stack automation platform that listens for inbound Jira ticket events, ev
 │                                                                 │
 │  Polls MongoDB every second for queued jobs                    │
 │  Locks jobs atomically to prevent duplicate processing         │
+│  Recovers stale jobs from crashed workers automatically        │
+│  Retries failed jobs up to 3 attempts before marking failed    │
 │  Executes: ADD_COMMENT → Jira API                              │
 │            SEND_EMAIL  → Gmail SMTP                            │
 │  Records each execution with status + duration                 │
@@ -53,7 +55,7 @@ A full-stack automation platform that listens for inbound Jira ticket events, ev
 
 ## How It Works
 
-**End-to-end flow when a ticket is created:**
+**End to end flow when a ticket is created:**
 
 1. User submits a ticket form on the frontend
 2. API creates the issue in Jira via the Jira Cloud REST API
@@ -85,6 +87,10 @@ A full-stack automation platform that listens for inbound Jira ticket events, ev
 
 **SHA-256 event deduplication** — Each inbound event is hashed by its content. A unique index on the hash ensures the same event is never processed twice, even if a Jira webhook fires multiple times.
 
+**Stale job recovery** — Jobs stuck in `processing` for more than 5 minutes (e.g. from a crashed worker) are automatically requeued. A background interval runs every 2 minutes to catch and recover stale locks.
+
+**Max attempt guard** — Jobs that fail are retried up to 3 times before being permanently marked as `failed`, preventing infinite retry loops.
+
 **Soft delete on rules** — Rules are never hard-deleted. Setting `isDeleted: true` preserves audit history so job executions can always be traced back to the rule that triggered them.
 
 **Separation of concerns** — Business logic lives in `automationService.js`, not in route handlers. The same `processIncomingEvent` function is called from the ticket controller, the webhook controller, and the demo controller without duplication.
@@ -100,8 +106,8 @@ apps/
 ├── api/                        # Express REST API
 │   ├── controllers/            # HTTP request handlers
 │   ├── middleware/             # Auth, error handling, validation
-│   ├── models/                 # API-specific models
 │   ├── routes/                 # Route definitions
+│   ├── scripts/seed.js         # Dev database seeder
 │   └── services/
 │       ├── automationService.js  # Core rule matching + job creation
 │       └── jiraTicketService.js  # Jira API integration
@@ -150,8 +156,11 @@ apps/
 git clone https://github.com/yourusername/jira-automation.git
 cd jira-automation
 
-# Install dependencies
+# Install root dependencies
 npm install
+
+# Install frontend dependencies
+cd apps/web && npm install && cd ../..
 ```
 
 ### Configuration
@@ -160,56 +169,64 @@ npm install
 # Copy the environment template
 cp .env.example .env
 
-# Fill in your values
+# Fill in your values (Jira, MongoDB, Gmail, JWT)
 nano .env
 
 # Create frontend env file
 echo "VITE_API_URL=http://localhost:3000/api/v1" > apps/web/.env
 ```
 
+### Seed Demo Users and Rules
+
+```bash
+npm run seed
+```
+
+This creates three test accounts:
+
+| Email            | Password    | Role    |
+| ---------------- | ----------- | ------- |
+| admin@test.com   | password123 | Admin   |
+| manager@test.com | password123 | Manager |
+| staff@test.com   | password123 | Staff   |
+
+> **Note:** Update `manager@test.com` in the seed file to a real email address to test email notifications.
+
 ### Running the App
 
 ```bash
-# Start the API server
-npm run start
+# Terminal 1 — API server
+npm run api
 
-# In a second terminal — start the background worker
+# Terminal 2 — Background worker
 npm run worker
 
-# In a third terminal — start the frontend
-npm run dev
+# Terminal 3 — Frontend
+cd apps/web && npm run dev
 ```
 
 The app will be available at `http://localhost:5173`.
-
-### Seed Users
-
-New signups default to `staff` role. To create an admin, sign up then update the role directly in MongoDB Atlas:
-
-```js
-db.users.updateOne({ email: "your@email.com" }, { $set: { role: "admin" } });
-```
 
 ---
 
 ## API Endpoints
 
-| Method | Endpoint                        | Auth     | Description                             |
-| ------ | ------------------------------- | -------- | --------------------------------------- |
-| POST   | `/api/v1/auth/signup`           | Public   | Create account                          |
-| POST   | `/api/v1/auth/login`            | Public   | Login                                   |
-| GET    | `/api/v1/auth/me`               | User     | Get current user                        |
-| GET    | `/api/v1/auth/users`            | Admin    | List all users                          |
-| PATCH  | `/api/v1/auth/users/:id/role`   | Admin    | Update user role                        |
-| PATCH  | `/api/v1/auth/users/:id/active` | Admin    | Activate/deactivate user                |
-| POST   | `/api/v1/tickets`               | User     | Create Jira ticket + trigger automation |
-| GET    | `/api/v1/rules`                 | Manager+ | List rules                              |
-| POST   | `/api/v1/rules`                 | Manager+ | Create rule                             |
-| PATCH  | `/api/v1/rules/:id`             | Manager+ | Update/toggle rule                      |
-| DELETE | `/api/v1/rules/:id`             | Manager+ | Soft delete rule                        |
-| GET    | `/api/v1/jobs`                  | Admin    | List jobs                               |
-| GET    | `/api/v1/executions`            | Admin    | List executions                         |
-| GET    | `/api/v1/events`                | Admin    | List inbound events                     |
-| POST   | `/api/v1/demo/events`           | Admin    | Simulate an event                       |
-| GET    | `/api/v1/health`                | Public   | Health check                            |
-| POST   | `/api/v1/webhooks/jira`         | Webhook  | Receive Jira webhook                    |
+| Method | Endpoint                            | Auth     | Description                             |
+| ------ | ----------------------------------- | -------- | --------------------------------------- |
+| POST   | `/api/v1/auth/login`                | Public   | Login                                   |
+| GET    | `/api/v1/auth/me`                   | User     | Get current user                        |
+| GET    | `/api/v1/auth/users`                | Admin    | List all users                          |
+| PATCH  | `/api/v1/auth/users/:id/role`       | Admin    | Update user role                        |
+| PATCH  | `/api/v1/auth/users/:id/active`     | Admin    | Activate/deactivate user                |
+| PATCH  | `/api/v1/auth/users/:id/department` | Admin    | Update user department                  |
+| POST   | `/api/v1/tickets`                   | User     | Create Jira ticket + trigger automation |
+| GET    | `/api/v1/rules`                     | Manager+ | List rules                              |
+| POST   | `/api/v1/rules`                     | Manager+ | Create rule                             |
+| PATCH  | `/api/v1/rules/:id`                 | Manager+ | Update/toggle rule                      |
+| DELETE | `/api/v1/rules/:id`                 | Manager+ | Soft delete rule                        |
+| GET    | `/api/v1/jobs`                      | Admin    | List jobs                               |
+| GET    | `/api/v1/executions`                | Admin    | List executions                         |
+| GET    | `/api/v1/events`                    | Admin    | List inbound events                     |
+| POST   | `/api/v1/demo/events`               | Admin    | Simulate an event                       |
+| GET    | `/api/v1/health`                    | Public   | Health check                            |
+| POST   | `/api/v1/webhooks/jira`             | Webhook  | Receive Jira webhook                    |
