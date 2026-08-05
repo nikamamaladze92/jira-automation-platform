@@ -33,7 +33,7 @@ async function seed() {
       {
         name: "Manager User",
         // Replace with a real email address to receive manager notifications
-        email: "manager@test.com",
+        email: "nikamamaladze92@gmail.com",
         password: "password123",
         role: "manager",
         department: "mechanic",

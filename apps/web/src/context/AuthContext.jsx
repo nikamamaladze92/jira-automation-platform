@@ -55,6 +55,8 @@ export function AuthProvider({ children }) {
   );
 }
 
+// eslint wants the hook to be in separate file becaus eof that it warns us. THIS IS NOT ERROR
+
 export function useAuth() {
   return useContext(AuthContext);
 }

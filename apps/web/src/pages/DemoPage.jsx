@@ -1,5 +1,3 @@
-// trigger demo automation events from  UI, show matched rules and jobs results
-
 import { useState } from "react";
 import client from "../api/client";
 import { formatDepartment, formatJobType } from "../styles/tokens";
@@ -17,10 +15,10 @@ const initialForm = {
   eventType: "issue_created",
   issueKey: "TEST-100",
   priority: "high",
-  department: "warehouse",
+  department: "mechanic",
 };
 
-// subcomponents
+// Sub components
 
 function SimulationResult({ result }) {
   const matchedRules = result.matchedRules || [];
@@ -28,7 +26,6 @@ function SimulationResult({ result }) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-      {/* Summary counts */}
       <div style={{ display: "flex", gap: "12px" }}>
         <div
           style={{
@@ -80,7 +77,6 @@ function SimulationResult({ result }) {
         </div>
       </div>
 
-      {/* Event info */}
       <div
         style={{
           padding: "14px",
@@ -101,7 +97,6 @@ function SimulationResult({ result }) {
         </p>
       </div>
 
-      {/* Matched rules */}
       {matchedRules.length > 0 && (
         <div
           style={{
@@ -125,7 +120,6 @@ function SimulationResult({ result }) {
         </div>
       )}
 
-      {/* Triggered jobs */}
       {jobs.length > 0 && (
         <div
           style={{
@@ -159,7 +153,7 @@ function SimulationResult({ result }) {
   );
 }
 
-// main Component
+//  Main Component
 
 export default function DemoPage() {
   const [form, setForm] = useState(initialForm);
@@ -169,6 +163,8 @@ export default function DemoPage() {
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    // Clear previous result when form changes so user sees fresh results
+    setResult(null);
   };
 
   const handleTrigger = async (e) => {
@@ -178,7 +174,12 @@ export default function DemoPage() {
 
     try {
       setSubmitting(true);
-      const res = await client.post("/demo/events", form);
+      // Use a unique issue key each time to bypass event deduplication
+      const uniqueForm = {
+        ...form,
+        issueKey: `DEMO-${Date.now()}`,
+      };
+      const res = await client.post("/demo/events", uniqueForm);
       setResult(res.data.data);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to trigger simulation.");
@@ -201,8 +202,8 @@ export default function DemoPage() {
     <div>
       <h1 style={{ marginBottom: "8px" }}>Simulation</h1>
       <p style={{ marginTop: 0, color: "#666", marginBottom: "20px" }}>
-        Simulate an inbound ticket event to validate rule matching, job
-        creation, and worker execution.
+        Simulate an inbound ticket event to validate rule matching and job
+        creation — without creating a real Jira ticket.
       </p>
 
       <div
@@ -258,24 +259,6 @@ export default function DemoPage() {
               >
                 <option value="issue_created">Issue created</option>
               </select>
-            </div>
-
-            <div>
-              <div
-                style={{
-                  marginBottom: "6px",
-                  fontWeight: 600,
-                  fontSize: "14px",
-                }}
-              >
-                Issue Key
-              </div>
-              <input
-                name="issueKey"
-                value={form.issueKey}
-                onChange={handleChange}
-                style={inputStyle}
-              />
             </div>
 
             <div>
