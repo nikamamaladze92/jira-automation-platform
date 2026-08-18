@@ -1,21 +1,5 @@
 //share the auth state across the app
 
-//delete later
-//delete later
-
-//delete later
-//delete later
-//delete later
-
-//delete later
-//delete later
-//delete later
-//delete later
-//delete later
-//delete later
-//delete later
-//delete later
-
 import { createContext, useContext, useEffect, useState } from "react";
 import client from "../api/client";
 
